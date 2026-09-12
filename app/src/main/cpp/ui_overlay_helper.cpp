@@ -1,6 +1,6 @@
 #include <jni.h>
 #include <android/log.h>
-#include <GLES2/gl2.h>
+#include <GLES/gl.h>
 #include <cstdint>
 #include <cstring>
 #include <cstdlib>
@@ -36,8 +36,7 @@ static bool worldToScreen(const Vec3& world, Vec2& screen) {
     return true;
 }
 
-static void drawLine(float x1, float y1, float x2, float y2,
-                     float r, float g, float b) {
+static void drawLine(float x1, float y1, float x2, float y2, float r, float g, float b) {
     GLfloat verts[] = { x1, y1, x2, y2 };
     GLfloat cols[]  = { r,g,b,1.f, r,g,b,1.f };
     glEnableClientState(GL_VERTEX_ARRAY);
@@ -49,8 +48,7 @@ static void drawLine(float x1, float y1, float x2, float y2,
     glDisableClientState(GL_COLOR_ARRAY);
 }
 
-static void drawBox(float cx, float cy, float w, float h,
-                    float r, float g, float b) {
+static void drawBox(float cx, float cy, float w, float h, float r, float g, float b) {
     float l = cx - w/2, ri = cx + w/2, t = cy - h, bo = cy;
     drawLine(l, t, ri, t,  r, g, b);
     drawLine(ri, t, ri, bo, r, g, b);
@@ -67,7 +65,6 @@ static void drawHealthBar(float cx, float cy, float w, float h, float hp) {
 
 static void renderFrame() {
     if (!g_initialized) return;
-
     glClear(GL_COLOR_BUFFER_BIT);
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
@@ -78,26 +75,21 @@ static void renderFrame() {
 
     for (int i = 0; i < g_playerCount; i++) {
         if (!g_players[i].valid) continue;
-
         Vec2 head, feet;
         Vec3 headW = { g_players[i].pos.x, g_players[i].pos.y + 1.8f, g_players[i].pos.z };
         Vec3 feetW = g_players[i].pos;
-
         if (!worldToScreen(headW, head)) continue;
         if (!worldToScreen(feetW, feet)) continue;
-
         float boxH = feet.y - head.y;
         float boxW = boxH * 0.45f;
         float cx   = (head.x + feet.x) * 0.5f;
-
         bool enemy = g_players[i].team != 0;
-        float r = enemy ? 1.f  : 0.f;
-        float g = enemy ? 0.2f : 1.f;
-        float b = enemy ? 0.2f : 0.f;
-
-        drawBox(cx, feet.y, boxW, boxH, r, g, b);
+        float cr = enemy ? 1.f  : 0.f;
+        float cg = enemy ? 0.2f : 1.f;
+        float cb = enemy ? 0.2f : 0.f;
+        drawBox(cx, feet.y, boxW, boxH, cr, cg, cb);
         drawHealthBar(cx, feet.y, boxW, boxH, g_players[i].health);
-        drawLine(g_screenW / 2.f, g_screenH / 2.f, cx, head.y, r, g, b);
+        drawLine(g_screenW / 2.f, g_screenH / 2.f, cx, head.y, cr, cg, cb);
     }
 }
 
@@ -136,7 +128,7 @@ Java_com_renderkit_support_AssetHelper_setPlayerData(JNIEnv*, jclass,
 }
 
 extern "C" JNIEXPORT void JNICALL
-Java_com_renderkit_support_AssetHelper_setViewMatrix(JNIEnv*, jclass, jfloatArray mat) {
+Java_com_renderkit_support_AssetHelper_setViewMatrix(JNIEnv* env, jclass, jfloatArray mat) {
     if (!mat) return;
     jfloat* data = env->GetFloatArrayElements(mat, nullptr);
     if (data) {

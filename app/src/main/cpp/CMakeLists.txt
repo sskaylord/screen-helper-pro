@@ -14,7 +14,7 @@ add_library(render_support SHARED
 )
 
 find_library(LOG_LIB log)
-find_library(GL_LIB GLESv2)
+find_library(GL_LIB GLESv1_CM)
 find_library(ANDROID_LIB android)
 
 target_link_libraries(render_support
