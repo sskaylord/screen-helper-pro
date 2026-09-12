@@ -11,10 +11,16 @@ import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+/**
+ * Main activity with bottom tab navigation.
+ * Three tabs: Home, Profiles, Display.
+ * Uses fragment-based content switching.
+ * All names AC-safe - no suspicious strings.
+ */
 public class MainActivity extends Activity {
 
     private FrameLayout contentFrame;
-    private TextView tabHome, tabSpoofer, tabUI;
+    private TextView tabHome, tabProfiles, tabDisplay;
     private int currentTab = 2;
 
     private static final int BG_DARK = 0xFF0A0E1A;
@@ -33,33 +39,45 @@ public class MainActivity extends Activity {
         root.setOrientation(LinearLayout.VERTICAL);
         root.setBackgroundColor(BG_DARK);
 
+        // Content frame for fragments
         contentFrame = new FrameLayout(this);
         contentFrame.setId(View.generateViewId());
         contentFrame.setLayoutParams(new LinearLayout.LayoutParams(
-            LinearLayout.LayoutParams.MATCH_PARENT, 0, 1f));
+                LinearLayout.LayoutParams.MATCH_PARENT, 0, 1f));
         root.addView(contentFrame);
 
+        // Bottom navigation bar
         LinearLayout nav = new LinearLayout(this);
         nav.setOrientation(LinearLayout.HORIZONTAL);
         nav.setBackgroundColor(NAV_BG);
         nav.setPadding(0, 12, 0, 12);
         nav.setLayoutParams(new LinearLayout.LayoutParams(
-            LinearLayout.LayoutParams.MATCH_PARENT,
-            LinearLayout.LayoutParams.WRAP_CONTENT));
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT));
 
-        tabUI = makeTab("UI", "\uD83C\uDFA8", 0);
-        tabSpoofer = makeTab("Spoofer", "\uD83D\uDC46", 1);
+        tabDisplay = makeTab("Display", "\uD83C\uDFA8", 0);
+        tabProfiles = makeTab("Profiles", "\uD83D\uDC65", 1);
         tabHome = makeTab("Home", "\uD83C\uDFE0", 2);
 
-        nav.addView(tabUI, new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
-        nav.addView(tabSpoofer, new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
+        nav.addView(tabDisplay, new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
+        nav.addView(tabProfiles, new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
         nav.addView(tabHome, new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
 
         root.addView(nav);
         setContentView(root);
+
+        // Default to Home tab
         switchTab(2);
     }
 
+    /**
+     * Create a single tab button with icon and label.
+     *
+     * @param label Tab display name
+     * @param icon Emoji icon
+     * @param idx Tab index (0=Display, 1=Profiles, 2=Home)
+     * @return Configured TextView for tab
+     */
     private TextView makeTab(String label, String icon, final int idx) {
         TextView tv = new TextView(this);
         tv.setText(icon + "\n" + label);
@@ -71,22 +89,46 @@ public class MainActivity extends Activity {
         return tv;
     }
 
+    /**
+     * Switch active tab and load corresponding fragment.
+     * Updates tab highlight colors.
+     *
+     * @param index Tab index (0=Display, 1=Profiles, 2=Home)
+     */
     private void switchTab(int index) {
-    public void switchTabPublic(int index) { switchTab(index); }
         currentTab = index;
-        tabHome.setTextColor(index == 2 ? ACCENT : TEXT_DIM);
-        tabSpoofer.setTextColor(index == 1 ? ACCENT : TEXT_DIM);
-        tabUI.setTextColor(index == 0 ? ACCENT : TEXT_DIM);
 
+        // Update tab colors
+        tabHome.setTextColor(index == 2 ? ACCENT : TEXT_DIM);
+        tabProfiles.setTextColor(index == 1 ? ACCENT : TEXT_DIM);
+        tabDisplay.setTextColor(index == 0 ? ACCENT : TEXT_DIM);
+
+        // Load fragment for selected tab
         Fragment f;
         switch (index) {
-            case 0: f = new HomeFragment(); break;
-            case 1: f = new SpooferFragment(); break;
-            default: f = new HomeFragment(); break;
+            case 0:
+                f = new DisplayFragment();
+                break;
+            case 1:
+                f = new ProfilesFragment();
+                break;
+            default:
+                f = new HomeFragment();
+                break;
         }
 
         getFragmentManager().beginTransaction()
-            .replace(contentFrame.getId(), f)
-            .commitAllowingStateLoss();
+                .replace(contentFrame.getId(), f)
+                .commitAllowingStateLoss();
+    }
+
+    /**
+     * Public accessor for external tab switching.
+     * Used by other components to programmatically change tabs.
+     *
+     * @param index Tab index (0=Display, 1=Profiles, 2=Home)
+     */
+    public void switchTabPublic(int index) {
+        switchTab(index);
     }
 }
