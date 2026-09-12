@@ -5,7 +5,7 @@
 #include <cstdio>
 #include <android/log.h>
 
-#define TAG "RKSupport"
+#define TAG "DispUtils"
 #define LOGI(...) __android_log_print(ANDROID_LOG_INFO, TAG, __VA_ARGS__)
 
 struct Offsets {
@@ -64,7 +64,7 @@ bool resolve_offsets() {
 }
 
 extern "C" JNIEXPORT jlong JNICALL
-Java_com_renderkit_support_AssetHelper_getOffset(JNIEnv*, jclass, jint type) {
+Java_com_display_utils_AssetHelper_getOffset(JNIEnv*, jclass, jint type) {
     if (!g_offsets.resolved) resolve_offsets();
     if (!g_offsets.resolved) return -1;
     switch (type) {

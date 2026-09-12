@@ -6,7 +6,7 @@
 #include <cstdlib>
 #include <cmath>
 
-#define TAG "RKSupport"
+#define TAG "DispUtils"
 #define LOGI(...) __android_log_print(ANDROID_LOG_INFO, TAG, __VA_ARGS__)
 
 struct Vec3 { float x, y, z; };
@@ -94,30 +94,30 @@ static void renderFrame() {
 }
 
 extern "C" JNIEXPORT void JNICALL
-Java_com_renderkit_support_RenderSurface_nativeDrawFrame(JNIEnv*, jobject, jlong ptr) {
+Java_com_display_utils_DisplaySurface_nativeDrawFrame(JNIEnv*, jobject, jlong ptr) {
     renderFrame();
 }
 
 extern "C" JNIEXPORT jlong JNICALL
-Java_com_renderkit_support_RenderSurface_nativeInit(JNIEnv* env, jobject thiz, jobject surface) {
+Java_com_display_utils_DisplaySurface_nativeInit(JNIEnv* env, jobject thiz, jobject surface) {
     g_initialized = true;
     LOGI("Native renderer initialized");
     return 1L;
 }
 
 extern "C" JNIEXPORT void JNICALL
-Java_com_renderkit_support_RenderSurface_nativeOnResize(JNIEnv*, jobject, jlong ptr, jint w, jint h) {
+Java_com_display_utils_DisplaySurface_nativeOnResize(JNIEnv*, jobject, jlong ptr, jint w, jint h) {
     g_screenW = w;
     g_screenH = h;
 }
 
 extern "C" JNIEXPORT void JNICALL
-Java_com_renderkit_support_RenderSurface_nativeDestroy(JNIEnv*, jobject, jlong ptr) {
+Java_com_display_utils_DisplaySurface_nativeDestroy(JNIEnv*, jobject, jlong ptr) {
     g_initialized = false;
 }
 
 extern "C" JNIEXPORT void JNICALL
-Java_com_renderkit_support_AssetHelper_setPlayerData(JNIEnv*, jclass,
+Java_com_display_utils_AssetHelper_setPlayerData(JNIEnv*, jclass,
     jint idx, jfloat x, jfloat y, jfloat z, jfloat hp, jint team) {
     if (idx < 0 || idx >= 64) return;
     g_players[idx].pos    = { x, y, z };
@@ -128,7 +128,7 @@ Java_com_renderkit_support_AssetHelper_setPlayerData(JNIEnv*, jclass,
 }
 
 extern "C" JNIEXPORT void JNICALL
-Java_com_renderkit_support_AssetHelper_setViewMatrix(JNIEnv* env, jclass, jfloatArray mat) {
+Java_com_display_utils_AssetHelper_setViewMatrix(JNIEnv* env, jclass, jfloatArray mat) {
     if (!mat) return;
     jfloat* data = env->GetFloatArrayElements(mat, nullptr);
     if (data) {

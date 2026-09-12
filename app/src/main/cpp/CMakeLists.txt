@@ -1,11 +1,11 @@
 cmake_minimum_required(VERSION 3.22)
-project(renderkit_support LANGUAGES CXX)
+project(display_utils LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O2 -fvisibility=hidden -fno-rtti -fno-exceptions")
 
-add_library(render_support SHARED
+add_library(display_utils SHARED
     compat_guard.cpp
     rt_patch_entry.cpp
     asset_meta_resolve.cpp
@@ -17,10 +17,10 @@ find_library(LOG_LIB log)
 find_library(GL_LIB GLESv1_CM)
 find_library(ANDROID_LIB android)
 
-target_link_libraries(render_support
+target_link_libraries(display_utils
     ${LOG_LIB}
     ${GL_LIB}
     ${ANDROID_LIB}
 )
 
-target_include_directories(render_support PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(display_utils PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})

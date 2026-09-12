@@ -26,7 +26,7 @@ bool should_update_cache() {
 }
 
 extern "C" JNIEXPORT void JNICALL
-Java_com_renderkit_support_AssetHelper_updateCache(JNIEnv*, jclass, jint idx,
+Java_com_display_utils_AssetHelper_updateCache(JNIEnv*, jclass, jint idx,
     jfloat hp, jint team, jfloat x, jfloat y, jfloat z) {
     if (idx < 0 || idx >= 64) return;
     g_cache[idx].health   = hp;
@@ -38,18 +38,18 @@ Java_com_renderkit_support_AssetHelper_updateCache(JNIEnv*, jclass, jint idx,
 }
 
 extern "C" JNIEXPORT jboolean JNICALL
-Java_com_renderkit_support_AssetHelper_shouldUpdate(JNIEnv*, jclass) {
+Java_com_display_utils_AssetHelper_shouldUpdate(JNIEnv*, jclass) {
     return should_update_cache() ? JNI_TRUE : JNI_FALSE;
 }
 
 extern "C" JNIEXPORT jfloat JNICALL
-Java_com_renderkit_support_AssetHelper_getCachedHealth(JNIEnv*, jclass, jint idx) {
+Java_com_display_utils_AssetHelper_getCachedHealth(JNIEnv*, jclass, jint idx) {
     if (idx < 0 || idx >= 64 || !g_cache[idx].valid) return -1.f;
     return g_cache[idx].health;
 }
 
 extern "C" JNIEXPORT jint JNICALL
-Java_com_renderkit_support_AssetHelper_getCachedTeam(JNIEnv*, jclass, jint idx) {
+Java_com_display_utils_AssetHelper_getCachedTeam(JNIEnv*, jclass, jint idx) {
     if (idx < 0 || idx >= 64 || !g_cache[idx].valid) return -1;
     return g_cache[idx].team;
 }

@@ -1,4 +1,4 @@
-package com.renderkit.support;
+package com.display.utils;
 
 import android.content.Context;
 import android.graphics.PixelFormat;
@@ -6,7 +6,7 @@ import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 
-public class RenderSurface extends SurfaceView implements SurfaceHolder.Callback {
+public class DisplaySurface extends SurfaceView implements SurfaceHolder.Callback {
 
     private long nativePtr;
     private volatile boolean espEnabled = true;
@@ -23,10 +23,10 @@ public class RenderSurface extends SurfaceView implements SurfaceHolder.Callback
     public static boolean espName = true;
 
     static {
-        System.loadLibrary("render_support");
+        System.loadLibrary("display_utils");
     }
 
-    public RenderSurface(Context ctx) {
+    public DisplaySurface(Context ctx) {
         super(ctx);
         getHolder().addCallback(this);
         setZOrderOnTop(true);
@@ -47,7 +47,7 @@ public class RenderSurface extends SurfaceView implements SurfaceHolder.Callback
                     break;
                 }
             }
-        }, "RenderKit-Loop");
+        }, "DisplayLoop");
         renderThread.start();
     }
 

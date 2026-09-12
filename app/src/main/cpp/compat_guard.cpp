@@ -6,7 +6,7 @@
 #include <cstdint>
 #include <string>
 
-#define TAG "RKSupport"
+#define TAG "DispUtils"
 #define LOGI(...) __android_log_print(ANDROID_LOG_INFO, TAG, __VA_ARGS__)
 
 template<std::size_t N>
@@ -43,6 +43,6 @@ void compat_init_runtime() {
 }
 
 extern "C" JNIEXPORT jboolean JNICALL
-Java_com_renderkit_support_RuntimeBridge_isStealth(JNIEnv*, jclass) {
+Java_com_display_utils_RuntimeBridge_isStealth(JNIEnv*, jclass) {
     return g_stealth ? JNI_TRUE : JNI_FALSE;
 }

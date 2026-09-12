@@ -3,11 +3,11 @@ plugins {
 }
 
 android {
-    namespace 'com.renderkit.support'
+    namespace 'com.display.utils'
     compileSdk 34
 
     defaultConfig {
-        applicationId "com.renderkit.support"
+        applicationId "com.display.utils"
         minSdk 26
         targetSdk 34
         versionCode 1
