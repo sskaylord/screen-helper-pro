@@ -1,5 +1,6 @@
 #include <jni.h>
 #include <android/log.h>
+#include <string>
 #include <GLES/gl.h>
 #include <cstdint>
 #include <cstring>

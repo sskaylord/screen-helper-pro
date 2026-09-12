@@ -1,5 +1,6 @@
 #include <jni.h>
 #include <android/log.h>
+#include <string>
 #include <cstdint>
 #include <cstring>
 #include <cstdio>
@@ -218,6 +219,7 @@ Java_com_display_utils_AssetLoader_nativeParseMeta(JNIEnv* env, jclass, jstring 
     const char* p = env->GetStringUTFChars(path, nullptr);
     if (!p) return JNI_FALSE;
 
+static bool loadMetaWithFallback(const char* path);
     bool ok = loadMetaWithFallback(p);
     env->ReleaseStringUTFChars(path, p);
 
