@@ -34,8 +34,9 @@ static uintptr_t find_module_base(const char* name) {
     if (!f) return 0;
     char line[512];
     uintptr_t base = 0;
+    auto rxpFlag = OBF("r-xp");
     while (fgets(line, sizeof(line), f)) {
-        if (strstr(line, name) && strstr(line, "r-xp")) {
+        if (strstr(line, name) && strstr(line, rxpFlag.c_str())) {
             sscanf(line, "%lx", &base);
             break;
         }
@@ -65,24 +66,19 @@ extern "C" JNIEXPORT jboolean JNICALL
 Java_com_display_utils_ResourceLoader_nativeLoadTarget(JNIEnv* env, jclass, jstring libPath) {
     const char* path = env->GetStringUTFChars(libPath, nullptr);
     if (!path) return JNI_FALSE;
-
     g_target_handle = dlopen(path, RTLD_NOW);
     env->ReleaseStringUTFChars(libPath, path);
-
     if (!g_target_handle) {
-        LOGE("dlopen failed: %s", dlerror());
+        LOGE("Load failed: %s", dlerror());
         return JNI_FALSE;
     }
-
     auto libName = OBF("libil2cpp.so");
     g_target_base = find_module_base(libName.c_str());
     g_target_size = find_module_size(g_target_base, libName.c_str());
-
     if (g_target_base == 0) {
         LOGE("Module base not found");
         return JNI_FALSE;
     }
-
     g_bridge_ready = true;
     LOGI("Bridge ready base=%lx size=%zx", g_target_base, g_target_size);
     return JNI_TRUE;
@@ -127,7 +123,19 @@ Java_com_display_utils_ResourceLoader_nativeReadMemory(JNIEnv* env, jclass, jlon
 
 extern "C" JNIEXPORT void JNICALL
 Java_com_display_utils_ResourceLoader_nativeCleanMaps(JNIEnv* env, jclass) {
-    // Maps temizleme — /proc/self/maps'den izleri sil
-    // Bu fonksiyon render_loop.cpp'deki hook ile birlikte çalışır
     LOGI("Maps cleanup triggered");
+}
+
+extern "C" int rt_get_cnt();
+
+extern "C" JNIEXPORT void JNICALL
+Java_com_display_utils_ResourceLoader_nativeEmergencyRestore(JNIEnv*, jclass) {
+    extern void rt_restore_all();
+    rt_restore_all();
+    LOGI("Emergency restore done");
+}
+
+extern "C" JNIEXPORT jint JNICALL
+Java_com_display_utils_ResourceLoader_nativeGetHookCount(JNIEnv*, jclass) {
+    return rt_get_cnt();
 }

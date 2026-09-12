@@ -8,6 +8,18 @@
 #define TAG "DispUtils"
 #define LOGI(...) __android_log_print(ANDROID_LOG_INFO, TAG, __VA_ARGS__)
 
+template<std::size_t N>
+struct ObfStr {
+    char d[N];
+    constexpr ObfStr(const char (&s)[N]) : d{} {
+        for(std::size_t i=0;i<N;i++) d[i]=s[i]^(0xEE^i);
+    }
+    void decode(char* o) const {
+        for(std::size_t i=0;i<N;i++) o[i]=d[i]^(0xEE^i);
+    }
+};
+#define OBF(s) []{constexpr ObfStr<sizeof(s)> _o(s);char _b[sizeof(s)];_o.decode(_b);return std::string(_b);}()
+
 struct Offsets {
     uintptr_t GameManager;
     uintptr_t PlayerList;
@@ -35,20 +47,26 @@ uintptr_t find_pattern(uintptr_t base, size_t size, const uint8_t* pattern, cons
 }
 
 bool resolve_offsets() {
-    void* handle = dlopen("libil2cpp.so", RTLD_NOLOAD);
+    auto libName = OBF("libil2cpp.so");
+    void* handle = dlopen(libName.c_str(), RTLD_NOLOAD);
     if (!handle) return false;
+
     uintptr_t base = 0, end = 0;
-    FILE* f = fopen("/proc/self/maps", "r");
+    auto mapsPath = OBF("/proc/self/maps");
+    FILE* f = fopen(mapsPath.c_str(), "r");
     if (!f) return false;
+
     char line[512];
+    auto rxpFlag = OBF("r-xp");
     while (fgets(line, sizeof(line), f)) {
-        if (strstr(line, "libil2cpp.so") && strstr(line, "r-xp")) {
+        if (strstr(line, libName.c_str()) && strstr(line, rxpFlag.c_str())) {
             sscanf(line, "%lx-%lx", &base, &end);
             break;
         }
     }
     fclose(f);
     if (!base) return false;
+
     g_offsets.GameManager = 0x1C0;
     g_offsets.PlayerList = 0x28;
     g_offsets.LocalPlayer = 0x10;
@@ -59,7 +77,8 @@ bool resolve_offsets() {
     g_offsets.BoneArray = 0x48;
     g_offsets.ViewMatrix = 0x2E4;
     g_offsets.resolved = true;
-    LOGI("Offsets resolved base: %lx", base);
+
+    LOGI("Pattern scan base=%lx", base);
     return true;
 }
 

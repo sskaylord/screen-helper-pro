@@ -50,7 +50,7 @@ static uintptr_t g_offVM = 0;
 static uintptr_t g_offEL = 0;
 static uintptr_t g_offEC = 0;
 
-static struct timespec g_hookStart, g_hookEnd;
+static struct timespec g_t0, g_t1;
 
 static inline uint64_t nowNs() {
     struct timespec ts;
@@ -123,8 +123,8 @@ static void readPlayers() {
     }
 }
 
-static void normalizeTiming(uint64_t hookDurationNs) {
-    if (hookDurationNs > 2000000) {
+static void normalizeTiming(uint64_t durNs) {
+    if (durNs > 2000000) {
         // Hook 2ms'den uzun sürdüyse loglama — ama durma
         // AC timing check'i atlatmak için overhead'i minimize et
     }

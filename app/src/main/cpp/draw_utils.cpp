@@ -25,7 +25,7 @@ static float g_viewMatrix[16] = {};
 static int g_screenW = 1080, g_screenH = 1920;
 static bool g_initialized = false;
 
-static bool g_espEnabled = true, g_boxEnabled = true, g_cornerBox = true;
+static bool g_overlayOn = true, g_boxEnabled = true, g_cornerBox = true;
 static bool g_healthBar = true, g_showName = true, g_skeleton = true;
 static bool g_snaplines = true, g_greenCharm = true;
 static float g_boxThickness = 1.5f;
@@ -71,7 +71,7 @@ static void drawHealthBar(float cx, float cy, float w, float h, float hp) {
 }
 
 static void renderFrame() {
-    if (!g_initialized || !g_espEnabled) return;
+    if (!g_initialized || !g_overlayOn) return;
     glClear(GL_COLOR_BUFFER_BIT);
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
@@ -144,10 +144,10 @@ Java_com_display_utils_AssetHelper_setViewMatrix(JNIEnv* env, jclass, jfloatArra
 
 extern "C" JNIEXPORT void JNICALL
 Java_com_display_utils_DisplaySurface_setEspFlags(JNIEnv*, jclass,
-    jboolean esp, jboolean box, jboolean corner, jboolean hp,
+    jboolean en, jboolean box, jboolean corner, jboolean hp,
     jboolean name, jboolean skel, jboolean snap, jboolean charm,
     jfloat thick, jint eR, jint eG, jint eB, jint tR, jint tG, jint tB) {
-    g_espEnabled = esp;
+    g_overlayOn = en;
     g_boxEnabled = box;
     g_cornerBox = corner;
     g_healthBar = hp;

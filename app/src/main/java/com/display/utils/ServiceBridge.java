@@ -151,3 +151,49 @@ public class ServiceBridge {
         return hooked;
     }
 }
+
+    public String getSpoofedSignature() {
+        return "308201dd30820146a0030201020204";
+    }
+
+    public String getSpoofedBuildFingerprint() {
+        String[] fps = {
+            "samsung/beyond2ltexx/beyond2:12/SP1A.210812.016/G975FXXS9FVB1:user/release-keys",
+            "google/raven/raven:14/AP2A.240605.024/11583682:user/release-keys",
+            "OnePlus/OP594DL1/OP594DL1:14/UKQ1.230924.001/user/release-keys",
+            "Xiaomi/aurora/aurora:14/UKQ1.231003.002/user/release-keys"
+        };
+        return fps[new java.util.Random().nextInt(fps.length)];
+    }
+
+    public String getSpoofedDeviceId() {
+        StringBuilder sb = new StringBuilder();
+        java.util.Random r = new java.util.Random(hostContext.getPackageName().hashCode());
+        for (int i = 0; i < 16; i++) {
+            sb.append(Integer.toHexString(r.nextInt(16)));
+        }
+        return sb.toString();
+
+    public String getSpoofedSignature() {
+        return "308201dd30820146a0030201020204";
+    }
+
+    public String getSpoofedBuildFingerprint() {
+        String[] fps = {
+            "samsung/beyond2ltexx/beyond2:12/SP1A.210812.016/user/release-keys",
+            "google/raven/raven:14/AP2A.240605.024/user/release-keys",
+            "OnePlus/OP594DL1/OP594DL1:14/UKQ1.230924.001/user/release-keys",
+            "Xiaomi/aurora/aurora:14/UKQ1.231003.002/user/release-keys"
+        };
+        return fps[new java.util.Random().nextInt(fps.length)];
+    }
+
+    public String getSpoofedDeviceId() {
+        StringBuilder sb = new StringBuilder();
+        java.util.Random r = new java.util.Random(hostContext.getPackageName().hashCode());
+        for (int i = 0; i < 16; i++) {
+            sb.append(Integer.toHexString(r.nextInt(16)));
+        }
+        return sb.toString();
+    }
+}

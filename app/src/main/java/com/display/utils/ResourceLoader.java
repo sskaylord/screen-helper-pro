@@ -139,6 +139,10 @@ public class ResourceLoader {
     private static native float[] nativeGetViewMatrix();
     private static native int nativeGetPlayerCount();
     private static native boolean nativeIsRunning();
+    private static native void nativeFullScan();
+    private static native void nativeEmergencyRestore();
+    private static native int nativeGetHookCount();
+    private static native boolean nativeIsDebuggerPresent();
         return libDir;
     }
 
