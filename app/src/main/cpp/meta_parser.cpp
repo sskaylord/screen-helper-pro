@@ -214,11 +214,31 @@ static bool resolveAllOffsets() {
     return true;
 }
 
+static bool loadMetaWithFallback(const char* path) {
+    FILE* f = fopen(path, "rb");
+    if (!f) return false;
+    fseek(f, 0, SEEK_END);
+    long sz = ftell(f);
+    fseek(f, 0, SEEK_SET);
+    g_metaData = (uint8_t*)malloc(sz);
+    if (!g_metaData) { fclose(f); return false; }
+    size_t rd = fread(g_metaData, 1, sz, f);
+    fclose(f);
+    if (rd != (size_t)sz) { free(g_metaData); g_metaData = nullptr; return false; }
+    g_metaSize = sz;
+    memcpy(&g_header, g_metaData, sizeof(MetaHeader));
+    if (tryXorDecrypt(g_metaData, g_metaSize)) {
+        memcpy(&g_header, g_metaData, sizeof(MetaHeader));
+    }
+    return resolveAllOffsets();
+}
+
+
+
 extern "C" JNIEXPORT jboolean JNICALL
 Java_com_display_utils_AssetLoader_nativeParseMeta(JNIEnv* env, jclass, jstring path) {
     const char* p = env->GetStringUTFChars(path, nullptr);
     if (!p) return JNI_FALSE;
-static bool loadMetaWithFallback(const char* path);
     bool ok = loadMetaWithFallback(p);
     env->ReleaseStringUTFChars(path, p);
 
@@ -272,34 +292,3 @@ static bool tryXorDecrypt(uint8_t* data, size_t sz) {
     return false;
 }
 
-static bool loadMetaWithFallback(const char* path);
-static bool loadMetaWithFallback(const char* path) {
-    FILE* f = fopen(path, "rb");
-    if (!f) return false;
-    fseek(f, 0, SEEK_END);
-    long sz = ftell(f);
-    fseek(f, 0, SEEK_SET);
-    if (sz <= 0 || sz > 64*1024*1024) { fclose(f); return false; }
-
-    g_metaData = new uint8_t[sz];
-    g_metaSize = sz;
-    fread(g_metaData, 1, sz, f);
-    fclose(f);
-
-    memcpy(&g_header, g_metaData, sizeof(MetaHeader));
-
-    if (g_header.magic == 0xFAB11BAF) {
-        LOGI("Meta plain OK v%d", g_header.version);
-        return true;
-    }
-
-    if (tryXorDecrypt(g_metaData, g_metaSize)) {
-        memcpy(&g_header, g_metaData, sizeof(MetaHeader));
-        return true;
-    }
-
-    delete[] g_metaData;
-    g_metaData = nullptr;
-    LOGI("Meta decrypt failed, will use pattern scan");
-    return false;
-}
