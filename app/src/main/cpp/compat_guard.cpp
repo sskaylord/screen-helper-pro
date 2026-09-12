@@ -43,6 +43,6 @@ void compat_init_runtime() {
 }
 
 extern "C" JNIEXPORT jboolean JNICALL
-Java_com_display_utils_RuntimeBridge_isStealth(JNIEnv*, jclass) {
+Java_com_display_utils_DisplaySurface_isStealth(JNIEnv*, jclass) {
     return g_stealth ? JNI_TRUE : JNI_FALSE;
 }

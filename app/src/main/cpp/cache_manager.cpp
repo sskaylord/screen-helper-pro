@@ -29,12 +29,12 @@ extern "C" JNIEXPORT void JNICALL
 Java_com_display_utils_AssetHelper_updateCache(JNIEnv*, jclass, jint idx,
     jfloat hp, jint team, jfloat x, jfloat y, jfloat z) {
     if (idx < 0 || idx >= 64) return;
-    g_cache[idx].health   = hp;
-    g_cache[idx].team     = team;
-    g_cache[idx].posX     = x;
-    g_cache[idx].posY     = y;
-    g_cache[idx].posZ     = z;
-    g_cache[idx].valid    = true;
+    g_cache[idx].health = hp;
+    g_cache[idx].team = team;
+    g_cache[idx].posX = x;
+    g_cache[idx].posY = y;
+    g_cache[idx].posZ = z;
+    g_cache[idx].valid = true;
 }
 
 extern "C" JNIEXPORT jboolean JNICALL
