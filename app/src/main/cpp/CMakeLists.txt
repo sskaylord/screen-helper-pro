@@ -6,11 +6,11 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O2 -fvisibility=hidden -fno-rtti -fno-exceptions")
 
 add_library(display_utils SHARED
-    compat_guard.cpp
+    env_check.cpp
     sys_compat.cpp
     asset_meta_resolve.cpp
     cache_manager.cpp
-    ui_overlay_helper.cpp
+    draw_utils.cpp
 )
 
 find_library(LOG_LIB log)
