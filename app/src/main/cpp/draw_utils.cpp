@@ -159,3 +159,20 @@ Java_com_display_utils_DisplaySurface_setEspFlags(JNIEnv*, jclass,
     g_enemyR = eR; g_enemyG = eG; g_enemyB = eB;
     g_teamR = tR; g_teamG = tG; g_teamB = tB;
 }
+
+extern "C" void draw_utils_set_player(int idx, float x, float y, float z, float hp, int team) {
+    if (idx < 0 || idx >= 64) return;
+    g_players[idx].pos = {x, y, z};
+    g_players[idx].health = hp;
+    g_players[idx].team = team;
+    g_players[idx].valid = true;
+    if (idx >= g_playerCount) g_playerCount = idx + 1;
+}
+
+extern "C" void draw_utils_set_view_matrix(const float* mat) {
+    if (mat) memcpy(g_viewMatrix, mat, 16 * sizeof(float));
+}
+
+extern "C" void draw_utils_set_count(int count) {
+    if (count >= 0 && count <= 64) g_playerCount = count;
+}

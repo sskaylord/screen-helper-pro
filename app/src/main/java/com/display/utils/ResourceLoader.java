@@ -128,6 +128,17 @@ public class ResourceLoader {
     private static native long nativeFindSymbol(String symName);
     private static native byte[] nativeReadMemory(long addr, int size);
     private static native void nativeCleanMaps();
+    private static native boolean nativeParseMeta(String path);
+    private static native long nativeGetOffset(int type);
+    private static native boolean nativeOffsetsReady();
+    private static native void nativeStartLoop(long base);
+    private static native void nativeStopLoop();
+    private static native void nativeTick();
+    private static native void nativeSetOffsets(long gm, long pl, long lp, long hp, long tm, long tr, long ps, long bn, long vm, long el, long ec);
+    private static native float[] nativeGetPlayerData(int idx);
+    private static native float[] nativeGetViewMatrix();
+    private static native int nativeGetPlayerCount();
+    private static native boolean nativeIsRunning();
         return libDir;
     }
 
