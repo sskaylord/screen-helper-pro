@@ -5,195 +5,193 @@ import android.os.Build;
 import android.util.Log;
 
 import java.lang.reflect.Field;
-import java.lang.reflect.InvocationHandler;
-import java.lang.reflect.Method;
-import java.lang.reflect.Proxy;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Random;
 
+/**
+ * System configuration and AC bypass layer.
+ * Stealth-renamed from ServiceBridge to avoid detection.
+ *
+ * Responsibilities:
+ * - Hook Build fields via reflection to spoof device fingerprint
+ * - Generate consistent spoofed identifiers per session
+ * - Store original values for restoration on uninstall
+ * - Provide spoofed values to other subsystems
+ *
+ * All hooks use reflection only - no native ptrace required.
+ */
 public class SysConfig {
+    private static final String TAG = "DisplayUtils";
+    private static volatile boolean sInstalled = false;
+    private static Map<String, Object> sOriginalValues = new HashMap<>();
+    private static String sSpoofedSignature = null;
+    private static String sSpoofedFingerprint = null;
+    private static String sSpoofedDeviceId = null;
 
-    private static final String TAG = "DispUtils";
-    private final Context hostContext;
-    private final Map<String, Object> serviceCache = new HashMap<>();
-    private boolean hooked = false;
+    /**
+     * Install all AC bypass hooks and spoofs.
+     * Safe to call multiple times - idempotent after first install.
+     *
+     * @param ctx Application context
+     */
+    public static synchronized void install(Context ctx) {
+        if (sInstalled) return;
 
-    public SysConfig(Context ctx) {
-        this.hostContext = ctx;
-    }
-
-    public boolean install() {
         try {
-            hookActivityManager();
-            hookPackageManager();
-            hooked = true;
-            Log.i(TAG, "Service bridge installed");
-            return true;
+            // Generate consistent spoofed values for this session
+            generateSpoofedValues(ctx);
+
+            // Hook Build fields to return spoofed fingerprint/device info
+            hookBuildFields();
+
+            sInstalled = true;
+            Log.i(TAG, "SysConfig installed");
         } catch (Exception e) {
-            Log.e(TAG, "Bridge install failed: " + e.getMessage());
-            return false;
+            Log.e(TAG, "SysConfig install failed", e);
         }
     }
 
-    private void hookActivityManager() throws Exception {
-        Class<?> amnClass = Class.forName("android.app.ActivityManagerNative");
-        Field gDefaultField = amnClass.getDeclaredField("gDefault");
-        gDefaultField.setAccessible(true);
-        Object gDefault = gDefaultField.get(null);
+    /**
+     * Remove all hooks and restore original system state.
+     */
+    public static synchronized void uninstall() {
+        if (!sInstalled) return;
 
-        if (gDefault == null) {
-            Class<?> smClass = Class.forName("android.app.ActivityManager");
-            gDefaultField = smClass.getDeclaredField("IActivityManagerSingleton");
-            gDefaultField.setAccessible(true);
-            gDefault = gDefaultField.get(null);
-        }
-
-        if (gDefault == null) return;
-
-        Field instanceField = gDefault.getClass().getDeclaredField("mInstance");
-        instanceField.setAccessible(true);
-        final Object realAM = instanceField.get(gDefault);
-
-        if (realAM == null) return;
-
-        Object proxy = Proxy.newProxyInstance(
-            realAM.getClass().getClassLoader(),
-            new Class[]{Class.forName("android.app.IActivityManager")},
-            new AMHandler(realAM)
-        );
-
-        instanceField.set(gDefault, proxy);
-        Log.i(TAG, "AM hooked");
-    }
-
-    private void hookPackageManager() throws Exception {
-        Class<?> atClass = Class.forName("android.app.ActivityThread");
-        Method currentAT = atClass.getMethod("currentActivityThread");
-        Object at = currentAT.invoke(null);
-
-        Field sPackageManagerField = atClass.getDeclaredField("sPackageManager");
-        sPackageManagerField.setAccessible(true);
-        final Object realPM = sPackageManagerField.get(at);
-
-        if (realPM == null) return;
-
-        Object proxy = Proxy.newProxyInstance(
-            realPM.getClass().getClassLoader(),
-            new Class[]{Class.forName("android.content.pm.IPackageManager")},
-            new PMHandler(realPM)
-        );
-
-        sPackageManagerField.set(at, proxy);
-
-        Field pmField = hostContext.getPackageManager().getClass().getDeclaredField("mPM");
-        pmField.setAccessible(true);
-        pmField.set(hostContext.getPackageManager(), proxy);
-
-        Log.i(TAG, "PM hooked");
-    }
-
-    private class AMHandler implements InvocationHandler {
-        private final Object real;
-
-        AMHandler(Object real) { this.real = real; }
-
-        @Override
-        public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-            String name = method.getName();
-
-            if ("getRunningAppProcesses".equals(name)) {
-                Object result = method.invoke(real, args);
-                return filterProcesses(result);
-            }
-
-            if ("getContentProvider".equals(name)) {
-                return method.invoke(real, args);
-            }
-
-            return method.invoke(real, args);
-        }
-
-        private Object filterProcesses(Object processList) {
-            return processList;
+        try {
+            restoreBuildFields();
+            sOriginalValues.clear();
+            sInstalled = false;
+            Log.i(TAG, "SysConfig uninstalled");
+        } catch (Exception e) {
+            Log.e(TAG, "SysConfig uninstall failed", e);
         }
     }
 
-    private class PMHandler implements InvocationHandler {
-        private final Object real;
+    /**
+     * Generate spoofed device identifiers.
+     * Uses real Samsung/Google/Xiaomi fingerprints for authenticity.
+     * Device ID is seeded from package name for consistency across restarts.
+     *
+     * @param ctx Application context for seed generation
+     */
+    private static void generateSpoofedValues(Context ctx) {
+        // Spoofed signature hash (matches common legitimate apps)
+        sSpoofedSignature = "A1:B2:C3:D4:E5:F6:01:23:45:67:89:AB:CD:EF:01:23:45:67:89:AB";
 
-        PMHandler(Object real) { this.real = real; }
-
-        @Override
-        public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-            String name = method.getName();
-
-            if ("getPackageInfo".equals(name)) {
-                return method.invoke(real, args);
-            }
-
-            if ("getApplicationInfo".equals(name)) {
-                return method.invoke(real, args);
-            }
-
-            return method.invoke(real, args);
-        }
-    }
-
-    public String getSpoofedPackageName() {
-        return hostContext.getPackageName();
-    }
-
-    public int getSpoofedUid() {
-        return hostContext.getApplicationInfo().uid;
-    }
-
-    public boolean isHooked() {
-        return hooked;
-    }
-}
-
-    public String getSpoofedSignature() {
-        return "308201dd30820146a0030201020204";
-    }
-
-    public String getSpoofedBuildFingerprint() {
-        String[] fps = {
-            "samsung/beyond2ltexx/beyond2:12/SP1A.210812.016/G975FXXS9FVB1:user/release-keys",
-            "google/raven/raven:14/AP2A.240605.024/11583682:user/release-keys",
-            "OnePlus/OP594DL1/OP594DL1:14/UKQ1.230924.001/user/release-keys",
-            "Xiaomi/aurora/aurora:14/UKQ1.231003.002/user/release-keys"
+        // Real device fingerprints from popular devices
+        String[] fingerprints = {
+            "samsung/dreamltexx/dreamlte:10/QP1A.190711.020/G950FXXU9DTJ1:user/release-keys",
+            "google/oriole/oriole:13/TQ3A.230901.001/10754064:user/release-keys",
+            "Xiaomi/venus/venus:12/SKQ1.211006.001/V13.0.15.0.SKBMIXM:user/release-keys",
+            "OPPO/CPH2219EEA/OP4F7BL1:12/SKQ1.211113.001/1657520800000:user/release-keys"
         };
-        return fps[new java.util.Random().nextInt(fps.length)];
-    }
+        Random fpRandom = new Random(System.currentTimeMillis());
+        sSpoofedFingerprint = fingerprints[fpRandom.nextInt(fingerprints.length)];
 
-    public String getSpoofedDeviceId() {
-        StringBuilder sb = new StringBuilder();
-        java.util.Random r = new java.util.Random(hostContext.getPackageName().hashCode());
+        // Deterministic Android ID seeded from package name
+        // Ensures same ID across app restarts but different per package
+        Random idRandom = new Random(ctx.getPackageName().hashCode());
+        StringBuilder sb = new StringBuilder(16);
         for (int i = 0; i < 16; i++) {
-            sb.append(Integer.toHexString(r.nextInt(16)));
+            sb.append(Integer.toHexString(idRandom.nextInt(16)));
         }
-        return sb.toString();
+        sSpoofedDeviceId = sb.toString();
 
-    public String getSpoofedSignature() {
-        return "308201dd30820146a0030201020204";
+        Log.d(TAG, "Spoofed values generated: fp=" + sSpoofedFingerprint.substring(0, 20) + "...");
     }
 
-    public String getSpoofedBuildFingerprint() {
-        String[] fps = {
-            "samsung/beyond2ltexx/beyond2:12/SP1A.210812.016/user/release-keys",
-            "google/raven/raven:14/AP2A.240605.024/user/release-keys",
-            "OnePlus/OP594DL1/OP594DL1:14/UKQ1.230924.001/user/release-keys",
-            "Xiaomi/aurora/aurora:14/UKQ1.231003.002/user/release-keys"
-        };
-        return fps[new java.util.Random().nextInt(fps.length)];
+    /**
+     * Hook Build.FINGERPRINT, Build.MODEL, Build.BRAND via reflection.
+     * Stores originals for restoration.
+     */
+    private static void hookBuildFields() {
+        try {
+            // Save original values
+            sOriginalValues.put("fingerprint", Build.FINGERPRINT);
+            sOriginalValues.put("model", Build.MODEL);
+            sOriginalValues.put("brand", Build.BRAND);
+            sOriginalValues.put("device", Build.DEVICE);
+            sOriginalValues.put("product", Build.PRODUCT);
+
+            // Set spoofed values via reflection (Build fields are static final)
+            setStaticFinalField(Build.class, "FINGERPRINT", sSpoofedFingerprint);
+            setStaticFinalField(Build.class, "MODEL", "SM-G950F");
+            setStaticFinalField(Build.class, "BRAND", "samsung");
+            setStaticFinalField(Build.class, "DEVICE", "dreamlte");
+            setStaticFinalField(Build.class, "PRODUCT", "dreamltexx");
+
+            Log.d(TAG, "Build fields hooked successfully");
+        } catch (Exception e) {
+            Log.e(TAG, "Build field hook failed", e);
+        }
     }
 
-    public String getSpoofedDeviceId() {
-        StringBuilder sb = new StringBuilder();
-        java.util.Random r = new java.util.Random(hostContext.getPackageName().hashCode());
-        for (int i = 0; i < 16; i++) {
-            sb.append(Integer.toHexString(r.nextInt(16)));
+    /**
+     * Restore original Build field values.
+     */
+    private static void restoreBuildFields() {
+        try {
+            if (sOriginalValues.containsKey("fingerprint")) {
+                setStaticFinalField(Build.class, "FINGERPRINT", sOriginalValues.get("fingerprint"));
+            }
+            if (sOriginalValues.containsKey("model")) {
+                setStaticFinalField(Build.class, "MODEL", sOriginalValues.get("model"));
+            }
+            if (sOriginalValues.containsKey("brand")) {
+                setStaticFinalField(Build.class, "BRAND", sOriginalValues.get("brand"));
+            }
+            if (sOriginalValues.containsKey("device")) {
+                setStaticFinalField(Build.class, "DEVICE", sOriginalValues.get("device"));
+            }
+            if (sOriginalValues.containsKey("product")) {
+                setStaticFinalField(Build.class, "PRODUCT", sOriginalValues.get("product"));
+            }
+
+            Log.d(TAG, "Build fields restored");
+        } catch (Exception e) {
+            Log.e(TAG, "Build field restore failed", e);
         }
-        return sb.toString();
+    }
+
+    /**
+     * Utility: Set static final field value via reflection.
+     * Required because Build fields are declared static final.
+     * Removes final modifier before setting value.
+     *
+     * @param clazz Target class
+     * @param fieldName Field name to modify
+     * @param value New value to set
+     */
+    private static void setStaticFinalField(Class<?> clazz, String fieldName, Object value) throws Exception {
+        Field field = clazz.getDeclaredField(fieldName);
+        field.setAccessible(true);
+
+        // Remove final modifier
+        Field modifiersField = Field.class.getDeclaredField("modifiers");
+        modifiersField.setAccessible(true);
+        modifiersField.setInt(field, field.getModifiers() & ~java.lang.reflect.Modifier.FINAL);
+
+        field.set(null, value);
+    }
+
+    /** Get spoofed signature hash string */
+    public static String getSpoofedSignature() {
+        return sSpoofedSignature;
+    }
+
+    /** Get spoofed build fingerprint */
+    public static String getSpoofedFingerprint() {
+        return sSpoofedFingerprint;
+    }
+
+    /** Get spoofed Android ID */
+    public static String getSpoofedDeviceId() {
+        return sSpoofedDeviceId;
+    }
+
+    /** Check if hooks are currently active */
+    public static boolean isInstalled() {
+        return sInstalled;
     }
 }
