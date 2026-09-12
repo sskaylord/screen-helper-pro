@@ -26,7 +26,7 @@
         </activity>
 
         <activity
-            android:name=".ClonedAppsActivity"
+            android:name=".AppManager"
             android:configChanges="orientation|screenSize"
             android:theme="@android:style/Theme.Black.NoTitleBar" />
 

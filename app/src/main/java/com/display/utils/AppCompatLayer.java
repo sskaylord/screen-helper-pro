@@ -8,7 +8,7 @@ import android.widget.FrameLayout;
 public class AppCompatLayer extends Activity {
 
     private DisplaySurface displaySurface;
-    private DisplayPanel displayPanel;
+    private OverlayPanel displayPanel;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -24,7 +24,7 @@ public class AppCompatLayer extends Activity {
         ));
         setContentView(layout);
 
-        displayPanel = new DisplayPanel(this);
+        displayPanel = new OverlayPanel(this);
         displayPanel.show();
     }
 

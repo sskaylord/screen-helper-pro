@@ -16,7 +16,7 @@ public class FloatWidget extends View {
 
     private final WindowManager wm;
     private final WindowManager.LayoutParams params;
-    private final DisplayPanel panel;
+    private final OverlayPanel panel;
 
     private final Paint bgPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint textPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
@@ -28,7 +28,7 @@ public class FloatWidget extends View {
     private float downRawX, downRawY;
     private long downTime;
 
-    public FloatWidget(Context ctx, DisplayPanel panel) {
+    public FloatWidget(Context ctx, OverlayPanel panel) {
         super(ctx);
         this.panel = panel;
         wm = (WindowManager) ctx.getSystemService(Context.WINDOW_SERVICE);

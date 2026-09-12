@@ -37,7 +37,7 @@ public class HomeFragment extends Fragment {
         root.addView(makeWelcomeCard());
         root.addView(makeSpacer(30));
         root.addView(makeActionButton("Cloned Apps", "Run multiple accounts", "\uD83D\uDCCB", () -> {
-            startActivity(new Intent(getActivity(), ClonedAppsActivity.class));
+            startActivity(new Intent(getActivity(), AppManager.class));
         }));
         root.addView(makeSpacer(20));
         root.addView(makeActionButton("Spoofer", "Random Android ID", "\uD83D\uDC46", () -> {

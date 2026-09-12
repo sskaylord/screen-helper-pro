@@ -10,7 +10,7 @@ import java.lang.reflect.Method;
 
 import dalvik.system.DexClassLoader;
 
-public class ResourceLoader {
+public class AssetLoader {
 
     private static final String TAG = "DispUtils";
     private final Context hostContext;
@@ -20,7 +20,7 @@ public class ResourceLoader {
     private final File libDir;
     private ClassLoader targetLoader;
 
-    public ResourceLoader(Context ctx) {
+    public AssetLoader(Context ctx) {
         this.hostContext = ctx;
         this.virtualRoot = new File(ctx.getFilesDir(), "vs");
         this.dexDir = new File(virtualRoot, "dex");

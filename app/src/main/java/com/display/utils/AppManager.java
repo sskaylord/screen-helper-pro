@@ -1,6 +1,8 @@
 package com.display.utils;
 
 import android.app.Activity;
+import android.content.ComponentName;
+import android.content.Intent;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
@@ -17,8 +19,13 @@ import android.widget.TextView;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ClonedAppsActivity extends Activity {
-
+/**
+ * Cloned apps manager and virtual launch activity.
+ * Displays list of cloneable applications with styled UI.
+ * Standoff 2 triggers full DisplayCore engine bootstrap.
+ * Other apps show placeholder toast for future expansion.
+ */
+public class AppManager extends Activity {
     private static final int BG_DARK = 0xFF0A0E1A;
     private static final int CARD_BG = 0xFF111827;
     private static final int ACCENT = 0xFF3B82F6;
@@ -38,7 +45,6 @@ public class ClonedAppsActivity extends Activity {
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
         root.setBackgroundColor(BG_DARK);
-
         root.addView(makeTopBar());
 
         ScrollView scroll = new ScrollView(this);
@@ -73,6 +79,9 @@ public class ClonedAppsActivity extends Activity {
         setContentView(root);
     }
 
+    /**
+     * Build top navigation bar with back button and title.
+     */
     private View makeTopBar() {
         LinearLayout bar = new LinearLayout(this);
         bar.setOrientation(LinearLayout.HORIZONTAL);
@@ -98,11 +107,15 @@ public class ClonedAppsActivity extends Activity {
         return bar;
     }
 
+    /**
+     * Build header card with icon and description text.
+     */
     private View makeHeader() {
         LinearLayout card = new LinearLayout(this);
         card.setOrientation(LinearLayout.HORIZONTAL);
         card.setGravity(Gravity.CENTER_VERTICAL);
         card.setPadding(30, 24, 30, 24);
+
         GradientDrawable bg = new GradientDrawable();
         bg.setColor(CARD_BG);
         bg.setCornerRadius(16);
@@ -134,13 +147,23 @@ public class ClonedAppsActivity extends Activity {
         return card;
     }
 
+    /**
+     * Add a single app row to the list with icon, name, package, and clone button.
+     * Primary apps get accent color, secondary get pink.
+     *
+     * @param name Display name of the application
+     * @param pkg Package name for lookup and launch
+     * @param isPrimary Whether this is a primary/supported target
+     */
     private void addApp(String name, String pkg, boolean isPrimary) {
         LinearLayout row = new LinearLayout(this);
         row.setOrientation(LinearLayout.HORIZONTAL);
         row.setGravity(Gravity.CENTER_VERTICAL);
         row.setPadding(20, 20, 20, 20);
+
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
-            LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT);
         lp.bottomMargin = 12;
         row.setLayoutParams(lp);
 
@@ -186,6 +209,7 @@ public class ClonedAppsActivity extends Activity {
         cloneBtn.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.BOLD));
         cloneBtn.setPadding(30, 12, 30, 12);
         cloneBtn.setGravity(Gravity.CENTER);
+
         GradientDrawable btnBg = new GradientDrawable();
         btnBg.setColor(isPrimary ? ACCENT : PINK);
         btnBg.setCornerRadius(20);
@@ -197,6 +221,10 @@ public class ClonedAppsActivity extends Activity {
         scrollPos++;
     }
 
+    /**
+     * Get emoji icon for installed package.
+     * Returns package emoji if found, generic box otherwise.
+     */
     private String getAppIcon(String pkg) {
         try {
             PackageManager pm = getPackageManager();
@@ -207,13 +235,78 @@ public class ClonedAppsActivity extends Activity {
         }
     }
 
+    /**
+     * Handle clone button click.
+     * For Standoff 2: full DisplayCore bootstrap + virtual launch + overlay.
+     * For other apps: placeholder toast indicating unsupported.
+     *
+     * @param name Display name for toast feedback
+     * @param pkg Target package name
+     */
     private void onCloneClick(String name, String pkg) {
+        // Only Standoff 2 triggers full engine bootstrap
+        if (!pkg.equals("com.axlebolt.standoff2")) {
+            showToast("Only Standoff 2 supported");
+            return;
+        }
+
+        try {
+            // Step 1: Install AC bypass hooks
+            SysConfig.install(this);
+
+            // Step 2: Activate file path redirection to virtual sandbox
+            PathHelper.activate(this, pkg);
+
+            // Step 3: Extract and load target dex + native libraries
+            AssetLoader.loadTarget(this, pkg);
+
+            // Step 4: Initialize native engine (attach, parse metadata, start render loop)
+            if (!DisplayCore.initialize(this, pkg)) {
+                showToast("Engine init failed");
+                return;
+            }
+
+            // Step 5: Launch target game activity via reflection in virtual space
+            Intent launchIntent = getPackageManager().getLaunchIntentForPackage(pkg);
+            if (launchIntent != null) {
+                ComponentName cn = launchIntent.getComponent();
+                Class<?> targetClass = Class.forName(
+                        cn.getClassName(),
+                        false,
+                        AssetLoader.getTargetClassLoader()
+                );
+                Intent virtualIntent = new Intent(this, targetClass);
+                virtualIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                virtualIntent.putExtras(launchIntent);
+                startActivity(virtualIntent);
+            }
+
+            // Step 6: Show overlay menu after game has time to initialize
+            new android.os.Handler(android.os.Looper.getMainLooper())
+                    .postDelayed(() -> OverlayPanel.show(this), 1500);
+
+            showToast("Launched");
+
+        } catch (Exception e) {
+            showToast("Error: " + e.getMessage());
+            DisplayCore.cleanup();
+        }
+    }
+
+    /**
+     * Show temporary toast-style overlay message.
+     * Auto-dismisses after 2 seconds.
+     *
+     * @param msg Message text to display
+     */
+    private void showToast(String msg) {
         TextView toast = new TextView(this);
-        toast.setText("Cloning " + name + "...");
+        toast.setText(msg);
         toast.setTextColor(Color.WHITE);
         toast.setTextSize(16);
         toast.setGravity(Gravity.CENTER);
         toast.setPadding(40, 30, 40, 30);
+
         GradientDrawable bg = new GradientDrawable();
         bg.setColor(0xDD111827);
         bg.setCornerRadius(16);
@@ -221,13 +314,13 @@ public class ClonedAppsActivity extends Activity {
 
         android.widget.FrameLayout overlay = new android.widget.FrameLayout(this);
         overlay.addView(toast, new android.widget.FrameLayout.LayoutParams(
-            android.widget.FrameLayout.LayoutParams.WRAP_CONTENT,
-            android.widget.FrameLayout.LayoutParams.WRAP_CONTENT,
-            Gravity.CENTER));
+                android.widget.FrameLayout.LayoutParams.WRAP_CONTENT,
+                android.widget.FrameLayout.LayoutParams.WRAP_CONTENT,
+                Gravity.CENTER));
 
         addContentView(overlay, new android.view.ViewGroup.LayoutParams(
-            android.view.ViewGroup.LayoutParams.MATCH_PARENT,
-            android.view.ViewGroup.LayoutParams.MATCH_PARENT));
+                android.view.ViewGroup.LayoutParams.MATCH_PARENT,
+                android.view.ViewGroup.LayoutParams.MATCH_PARENT));
 
         overlay.postDelayed(() -> {
             try {
@@ -236,9 +329,15 @@ public class ClonedAppsActivity extends Activity {
         }, 2000);
     }
 
+    /**
+     * Create vertical spacer view.
+     *
+     * @param h Height in pixels
+     */
     private View makeSpacer(int h) {
         View v = new View(this);
-        v.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, h));
+        v.setLayoutParams(new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, h));
         return v;
     }
 }

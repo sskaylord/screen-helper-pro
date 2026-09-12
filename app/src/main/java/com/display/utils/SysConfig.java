@@ -11,14 +11,14 @@ import java.lang.reflect.Proxy;
 import java.util.HashMap;
 import java.util.Map;
 
-public class ServiceBridge {
+public class SysConfig {
 
     private static final String TAG = "DispUtils";
     private final Context hostContext;
     private final Map<String, Object> serviceCache = new HashMap<>();
     private boolean hooked = false;
 
-    public ServiceBridge(Context ctx) {
+    public SysConfig(Context ctx) {
         this.hostContext = ctx;
     }
 

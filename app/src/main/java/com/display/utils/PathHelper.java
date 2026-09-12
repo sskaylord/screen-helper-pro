@@ -9,7 +9,7 @@ import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
 
-public class PathResolver {
+public class PathHelper {
 
     private static final String TAG = "DispUtils";
     private final Context hostContext;
@@ -17,7 +17,7 @@ public class PathResolver {
     private final Map<String, String> pathMap = new HashMap<>();
     private boolean active = false;
 
-    public PathResolver(Context ctx) {
+    public PathHelper(Context ctx) {
         this.hostContext = ctx;
         this.virtualDataDir = new File(ctx.getFilesDir(), "vs/data");
         this.virtualDataDir.mkdirs();

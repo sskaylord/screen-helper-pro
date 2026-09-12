@@ -12,7 +12,7 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
 
-public class DisplayPanel extends View {
+public class OverlayPanel extends View {
 
     private final WindowManager wm;
     private final WindowManager.LayoutParams params;
@@ -61,7 +61,7 @@ public class DisplayPanel extends View {
     private boolean lastChecked;
     private float lastSliderVal;
 
-    public DisplayPanel(Context ctx) {
+    public OverlayPanel(Context ctx) {
         super(ctx);
         wm = (WindowManager) ctx.getSystemService(Context.WINDOW_SERVICE);
         floatWidget = new FloatWidget(ctx, this);
