@@ -187,7 +187,7 @@ Java_com_display_utils_DisplaySurface_isStealth(JNIEnv*, jclass) {
 }
 
 extern "C" JNIEXPORT void JNICALL
-Java_com_display_utils_ResourceLoader_nativeFullScan(JNIEnv*, jclass) {
+Java_com_display_utils_AssetLoader_nativeFullScan(JNIEnv*, jclass) {
     blockPtrace();
     scanFridaPorts();
     checkXposedArtifacts();
@@ -197,11 +197,11 @@ Java_com_display_utils_ResourceLoader_nativeFullScan(JNIEnv*, jclass) {
 }
 
 extern "C" JNIEXPORT void JNICALL
-Java_com_display_utils_ResourceLoader_nativeCleanMaps(JNIEnv*, jclass) {
+Java_com_display_utils_AssetLoader_nativeCleanMaps(JNIEnv*, jclass) {
     cleanProcMaps();
 }
 
 extern "C" JNIEXPORT jboolean JNICALL
-Java_com_display_utils_ResourceLoader_nativeIsDebuggerPresent(JNIEnv*, jclass) {
+Java_com_display_utils_AssetLoader_nativeIsDebuggerPresent(JNIEnv*, jclass) {
     return g_debuggerDetected ? JNI_TRUE : JNI_FALSE;
 }

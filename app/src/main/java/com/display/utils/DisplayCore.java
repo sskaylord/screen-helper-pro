@@ -6,11 +6,17 @@ import android.os.Looper;
 import android.util.Log;
 
 /**
- * Core orchestrator for native engine bootstrap.
- * Handles virtual environment setup, native library loading,
- * IL2CPP metadata parsing, and render loop lifecycle.
- * 
- * Stealth-renamed from DisplayCore to avoid AC string detection.
+ * Core orchestrator for engine bootstrap and lifecycle management.
+ * Pure Java layer - all native calls delegated to AssetLoader.
+ * No JNI declarations here to avoid class mismatch crashes.
+ *
+ * Responsibilities:
+ * - Coordinate startup sequence across all subsystems
+ * - Manage render loop lifecycle (start/pause/resume/stop)
+ * - Handle error recovery and graceful shutdown
+ * - Provide Java-side 60fps tick synchronization
+ *
+ * Stealth-named to avoid AC string detection.
  */
 public class DisplayCore {
     private static final String TAG = "DisplayUtils";
@@ -19,18 +25,8 @@ public class DisplayCore {
     private static Handler sTickHandler;
     private static Runnable sTickRunnable;
 
-    // JNI method declarations - signatures must match cpp/native_bridge.cpp exactly
-    public static native int nativeLoadTarget(String pkgName);
-    public static native int nativeParseMeta();
-    public static native void nativeSetOffsets(long gmOff, long plOff, long hpOff, long posOff);
-    public static native void nativeStartLoop();
-    public static native void nativeTick();
-    public static native void nativeStopLoop();
-    public static native int nativeGetStatus();
-
     /**
      * Master bootstrap sequence.
-     * Must be called after virtual environment is prepared.
      * Executes in strict order: hooks → paths → assets → native attach → parse → offsets → loop
      *
      * @param ctx Application context
@@ -51,31 +47,33 @@ public class DisplayCore {
             AssetLoader.loadTarget(ctx, targetPkg);
 
             // Step 4: Attach to target process, find module base address
-            int loadResult = nativeLoadTarget(targetPkg);
+            int loadResult = AssetLoader.nativeLoadTarget(targetPkg);
             if (loadResult != 0) {
                 Log.e(TAG, "nativeLoadTarget failed with code: " + loadResult);
                 return false;
             }
 
             // Step 5: Parse global-metadata.dat, resolve IL2CPP type/field offsets
-            int parseResult = nativeParseMeta();
-            if (parseResult != 0) {
-                Log.e(TAG, "nativeParseMeta failed with code: " + parseResult);
+            String metaPath = PathHelper.getVirtualSubDir("meta") + "/global-metadata.dat";
+            boolean parseResult = AssetLoader.nativeParseMeta(metaPath);
+            if (!parseResult) {
+                Log.e(TAG, "nativeParseMeta failed");
                 return false;
             }
 
-            // Step 6: Push resolved offsets to native cache
+            // Step 6: Push resolved offsets to native cache (11 params matching cpp)
             // TODO: Replace 0x0 placeholders with real dumped offsets from Il2CppDumper
-            nativeSetOffsets(0x0, 0x0, 0x0, 0x0);
+            AssetLoader.nativeSetOffsets(0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0);
 
             // Step 7: Spawn native render thread (runs independently at ~60fps)
-            nativeStartLoop();
+            long base = AssetLoader.nativeGetBase();
+            AssetLoader.nativeStartLoop(base);
 
             // Step 8: Setup Java-side tick handler for UI synchronization
             sTickHandler = new Handler(Looper.getMainLooper());
             sTickRunnable = () -> {
                 if (sRunning) {
-                    nativeTick();
+                    AssetLoader.nativeTick();
                     sTickHandler.postDelayed(sTickRunnable, 16); // ~60fps sync
                 }
             };
@@ -103,7 +101,7 @@ public class DisplayCore {
             sTickHandler.removeCallbacks(sTickRunnable);
         }
         try {
-            nativeStopLoop();
+            AssetLoader.nativeStopLoop();
         } catch (UnsatisfiedLinkError ignored) {
             // Native lib not loaded yet, safe to ignore
         }
@@ -112,9 +110,7 @@ public class DisplayCore {
         Log.i(TAG, "DisplayCore cleaned up");
     }
 
-    /**
-     * Check if engine is fully initialized and running
-     */
+    /** Check if engine is fully initialized and running */
     public static boolean isRunning() {
         return sRunning && sInitialized;
     }

@@ -131,7 +131,7 @@ static void normalizeTiming(uint64_t durNs) {
 }
 
 extern "C" JNIEXPORT void JNICALL
-Java_com_display_utils_ResourceLoader_nativeStartLoop(JNIEnv*, jclass, jlong base) {
+Java_com_display_utils_AssetLoader_nativeStartLoop(JNIEnv*, jclass, jlong base) {
     g_baseAddr = (uintptr_t)base;
     g_running = true;
     g_frameIdx = 0;
@@ -140,14 +140,14 @@ Java_com_display_utils_ResourceLoader_nativeStartLoop(JNIEnv*, jclass, jlong bas
 }
 
 extern "C" JNIEXPORT void JNICALL
-Java_com_display_utils_ResourceLoader_nativeStopLoop(JNIEnv*, jclass) {
+Java_com_display_utils_AssetLoader_nativeStopLoop(JNIEnv*, jclass) {
     g_running = false;
     g_baseAddr = 0;
     g_count = 0;
 }
 
 extern "C" JNIEXPORT void JNICALL
-Java_com_display_utils_ResourceLoader_nativeTick(JNIEnv*, jclass) {
+Java_com_display_utils_AssetLoader_nativeTick(JNIEnv*, jclass) {
     if (!g_running) return;
 
     g_frameIdx++;
@@ -163,7 +163,7 @@ Java_com_display_utils_ResourceLoader_nativeTick(JNIEnv*, jclass) {
 }
 
 extern "C" JNIEXPORT void JNICALL
-Java_com_display_utils_ResourceLoader_nativeSetOffsets(JNIEnv*, jclass,
+Java_com_display_utils_AssetLoader_nativeSetOffsets(JNIEnv*, jclass,
     jlong gm, jlong pl, jlong lp, jlong hp, jlong tm,
     jlong tr, jlong ps, jlong bn, jlong vm, jlong el, jlong ec) {
     g_offGM = (uintptr_t)gm;
@@ -180,7 +180,7 @@ Java_com_display_utils_ResourceLoader_nativeSetOffsets(JNIEnv*, jclass,
 }
 
 extern "C" JNIEXPORT jfloatArray JNICALL
-Java_com_display_utils_ResourceLoader_nativeGetPlayerData(JNIEnv* env, jclass, jint idx) {
+Java_com_display_utils_AssetLoader_nativeGetPlayerData(JNIEnv* env, jclass, jint idx) {
     if (idx < 0 || idx >= 64 || !g_data[idx].valid) return nullptr;
 
     jfloatArray arr = env->NewFloatArray(7);
@@ -201,7 +201,7 @@ Java_com_display_utils_ResourceLoader_nativeGetPlayerData(JNIEnv* env, jclass, j
 }
 
 extern "C" JNIEXPORT jfloatArray JNICALL
-Java_com_display_utils_ResourceLoader_nativeGetViewMatrix(JNIEnv* env, jclass) {
+Java_com_display_utils_AssetLoader_nativeGetViewMatrix(JNIEnv* env, jclass) {
     jfloatArray arr = env->NewFloatArray(16);
     if (!arr) return nullptr;
     env->SetFloatArrayRegion(arr, 0, 16, g_viewMat);
@@ -209,12 +209,12 @@ Java_com_display_utils_ResourceLoader_nativeGetViewMatrix(JNIEnv* env, jclass) {
 }
 
 extern "C" JNIEXPORT jint JNICALL
-Java_com_display_utils_ResourceLoader_nativeGetPlayerCount(JNIEnv*, jclass) {
+Java_com_display_utils_AssetLoader_nativeGetPlayerCount(JNIEnv*, jclass) {
     return g_count;
 }
 
 extern "C" JNIEXPORT jboolean JNICALL
-Java_com_display_utils_ResourceLoader_nativeIsRunning(JNIEnv*, jclass) {
+Java_com_display_utils_AssetLoader_nativeIsRunning(JNIEnv*, jclass) {
     return g_running ? JNI_TRUE : JNI_FALSE;
 }
 

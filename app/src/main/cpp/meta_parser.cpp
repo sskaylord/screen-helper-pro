@@ -214,7 +214,7 @@ static bool resolveAllOffsets() {
 }
 
 extern "C" JNIEXPORT jboolean JNICALL
-Java_com_display_utils_ResourceLoader_nativeParseMeta(JNIEnv* env, jclass, jstring path) {
+Java_com_display_utils_AssetLoader_nativeParseMeta(JNIEnv* env, jclass, jstring path) {
     const char* p = env->GetStringUTFChars(path, nullptr);
     if (!p) return JNI_FALSE;
 
@@ -233,7 +233,7 @@ Java_com_display_utils_ResourceLoader_nativeParseMeta(JNIEnv* env, jclass, jstri
 }
 
 extern "C" JNIEXPORT jlong JNICALL
-Java_com_display_utils_ResourceLoader_nativeGetOffset(JNIEnv*, jclass, jint type) {
+Java_com_display_utils_AssetLoader_nativeGetOffset(JNIEnv*, jclass, jint type) {
     if (!g_resolved.ready) return -1;
     switch (type) {
         case 0: return (jlong)g_resolved.gameManager;
@@ -252,7 +252,7 @@ Java_com_display_utils_ResourceLoader_nativeGetOffset(JNIEnv*, jclass, jint type
 }
 
 extern "C" JNIEXPORT jboolean JNICALL
-Java_com_display_utils_ResourceLoader_nativeOffsetsReady(JNIEnv*, jclass) {
+Java_com_display_utils_AssetLoader_nativeOffsetsReady(JNIEnv*, jclass) {
     return g_resolved.ready ? JNI_TRUE : JNI_FALSE;
 }
 

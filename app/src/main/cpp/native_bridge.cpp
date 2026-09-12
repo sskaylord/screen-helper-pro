@@ -63,7 +63,7 @@ static size_t find_module_size(uintptr_t base, const char* name) {
 }
 
 extern "C" JNIEXPORT jboolean JNICALL
-Java_com_display_utils_ResourceLoader_nativeLoadTarget(JNIEnv* env, jclass, jstring libPath) {
+Java_com_display_utils_AssetLoader_nativeLoadTarget(JNIEnv* env, jclass, jstring libPath) {
     const char* path = env->GetStringUTFChars(libPath, nullptr);
     if (!path) return JNI_FALSE;
     g_target_handle = dlopen(path, RTLD_NOW);
@@ -85,22 +85,22 @@ Java_com_display_utils_ResourceLoader_nativeLoadTarget(JNIEnv* env, jclass, jstr
 }
 
 extern "C" JNIEXPORT jlong JNICALL
-Java_com_display_utils_ResourceLoader_nativeGetBase(JNIEnv*, jclass) {
+Java_com_display_utils_AssetLoader_nativeGetBase(JNIEnv*, jclass) {
     return (jlong)g_target_base;
 }
 
 extern "C" JNIEXPORT jlong JNICALL
-Java_com_display_utils_ResourceLoader_nativeGetSize(JNIEnv*, jclass) {
+Java_com_display_utils_AssetLoader_nativeGetSize(JNIEnv*, jclass) {
     return (jlong)g_target_size;
 }
 
 extern "C" JNIEXPORT jboolean JNICALL
-Java_com_display_utils_ResourceLoader_nativeIsReady(JNIEnv*, jclass) {
+Java_com_display_utils_AssetLoader_nativeIsReady(JNIEnv*, jclass) {
     return g_bridge_ready ? JNI_TRUE : JNI_FALSE;
 }
 
 extern "C" JNIEXPORT jlong JNICALL
-Java_com_display_utils_ResourceLoader_nativeFindSymbol(JNIEnv* env, jclass, jstring symName) {
+Java_com_display_utils_AssetLoader_nativeFindSymbol(JNIEnv* env, jclass, jstring symName) {
     if (!g_target_handle) return 0;
     const char* name = env->GetStringUTFChars(symName, nullptr);
     if (!name) return 0;
@@ -110,7 +110,7 @@ Java_com_display_utils_ResourceLoader_nativeFindSymbol(JNIEnv* env, jclass, jstr
 }
 
 extern "C" JNIEXPORT jbyteArray JNICALL
-Java_com_display_utils_ResourceLoader_nativeReadMemory(JNIEnv* env, jclass, jlong addr, jint size) {
+Java_com_display_utils_AssetLoader_nativeReadMemory(JNIEnv* env, jclass, jlong addr, jint size) {
     if (addr == 0 || size <= 0 || size > 65536) return nullptr;
     jbyteArray result = env->NewByteArray(size);
     if (!result) return nullptr;
@@ -122,20 +122,20 @@ Java_com_display_utils_ResourceLoader_nativeReadMemory(JNIEnv* env, jclass, jlon
 }
 
 extern "C" JNIEXPORT void JNICALL
-Java_com_display_utils_ResourceLoader_nativeCleanMaps(JNIEnv* env, jclass) {
+Java_com_display_utils_AssetLoader_nativeCleanMaps(JNIEnv* env, jclass) {
     LOGI("Maps cleanup triggered");
 }
 
 extern "C" int rt_get_cnt();
 
 extern "C" JNIEXPORT void JNICALL
-Java_com_display_utils_ResourceLoader_nativeEmergencyRestore(JNIEnv*, jclass) {
+Java_com_display_utils_AssetLoader_nativeEmergencyRestore(JNIEnv*, jclass) {
     extern void rt_restore_all();
     rt_restore_all();
     LOGI("Emergency restore done");
 }
 
 extern "C" JNIEXPORT jint JNICALL
-Java_com_display_utils_ResourceLoader_nativeGetHookCount(JNIEnv*, jclass) {
+Java_com_display_utils_AssetLoader_nativeGetHookCount(JNIEnv*, jclass) {
     return rt_get_cnt();
 }
