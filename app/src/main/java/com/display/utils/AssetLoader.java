@@ -120,9 +120,12 @@ public class AssetLoader {
 
     /**
      * Load target package dex and native libraries.
-     * Extracts from installed APK into virtual sandbox.
+     * Extracts from installed APK into app-private directories.
      * Creates DexClassLoader for target class resolution.
      * Loads libil2cpp.so via System.load().
+     *
+     * Note: Extraction uses app's own filesDir, NOT PathHelper virtual dirs.
+     * PathHelper handles runtime I/O redirection separately.
      *
      * @param ctx Application context
      * @param targetPkg Target package name (e.g., com.axlebolt.standoff2)
@@ -140,14 +143,11 @@ public class AssetLoader {
                 return;
             }
 
-            // Prepare extraction directories in virtual sandbox
-            String libExtractDir = PathHelper.getVirtualSubDir("lib");
-            String dexExtractDir = PathHelper.getVirtualSubDir("dex");
-
-            if (libExtractDir == null) {
-                Log.e(TAG, "Virtual lib dir not available");
-                return;
-            }
+            // Use app-private directories for extraction
+            String libExtractDir = ctx.getFilesDir().getAbsolutePath() + "/vs/lib";
+            String dexExtractDir = ctx.getFilesDir().getAbsolutePath() + "/vs/dex";
+            new File(libExtractDir).mkdirs();
+            new File(dexExtractDir).mkdirs();
 
             // Extract native library (arm64-v8a preferred, fallback to armeabi-v7a)
             sNativeLibPath = extractNativeLib(apkPath, libExtractDir);

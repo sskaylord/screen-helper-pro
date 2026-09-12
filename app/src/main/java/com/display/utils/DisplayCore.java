@@ -25,6 +25,10 @@ public class DisplayCore {
     private static Handler sTickHandler;
     private static Runnable sTickRunnable;
 
+    // Instance references for subsystems that require construction
+    private static PathHelper sPathHelper = null;
+    private static OverlayPanel sOverlayPanel = null;
+
     /**
      * Master bootstrap sequence.
      * Executes in strict order: hooks → paths → assets → native attach → parse → offsets → loop
@@ -40,8 +44,9 @@ public class DisplayCore {
             // Step 1: Install AC bypass hooks before any target interaction
             SysConfig.install(ctx);
 
-            // Step 2: Redirect file I/O to virtual sandbox
-            PathHelper.activate(ctx, targetPkg);
+            // Step 2: Create PathHelper instance and redirect file I/O to virtual sandbox
+            sPathHelper = new PathHelper(ctx);
+            sPathHelper.activate(targetPkg);
 
             // Step 3: Load target dex + extract libil2cpp.so into memory
             AssetLoader.loadTarget(ctx, targetPkg);
@@ -54,7 +59,7 @@ public class DisplayCore {
             }
 
             // Step 5: Parse global-metadata.dat, resolve IL2CPP type/field offsets
-            String metaPath = PathHelper.getVirtualSubDir("meta") + "/global-metadata.dat";
+            String metaPath = sPathHelper.getVirtualDataDir().getAbsolutePath() + "/meta/global-metadata.dat";
             boolean parseResult = AssetLoader.nativeParseMeta(metaPath);
             if (!parseResult) {
                 Log.e(TAG, "nativeParseMeta failed");
@@ -69,7 +74,10 @@ public class DisplayCore {
             long base = AssetLoader.nativeGetBase();
             AssetLoader.nativeStartLoop(base);
 
-            // Step 8: Setup Java-side tick handler for UI synchronization
+            // Step 8: Create OverlayPanel instance for in-game menu
+            sOverlayPanel = new OverlayPanel(ctx);
+
+            // Step 9: Setup Java-side tick handler for UI synchronization
             sTickHandler = new Handler(Looper.getMainLooper());
             sTickRunnable = () -> {
                 if (sRunning) {
@@ -106,6 +114,8 @@ public class DisplayCore {
             // Native lib not loaded yet, safe to ignore
         }
         SysConfig.uninstall();
+        sPathHelper = null;
+        sOverlayPanel = null;
         sInitialized = false;
         Log.i(TAG, "DisplayCore cleaned up");
     }
@@ -135,5 +145,15 @@ public class DisplayCore {
             sRunning = true;
             sTickHandler.post(sTickRunnable);
         }
+    }
+
+    /** Get OverlayPanel instance (null if not initialized) */
+    public static OverlayPanel getOverlayPanel() {
+        return sOverlayPanel;
+    }
+
+    /** Get PathHelper instance (null if not initialized) */
+    public static PathHelper getPathHelper() {
+        return sPathHelper;
     }
 }

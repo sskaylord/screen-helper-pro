@@ -251,22 +251,14 @@ public class AppManager extends Activity {
         }
 
         try {
-            // Step 1: Install AC bypass hooks
-            SysConfig.install(this);
-
-            // Step 2: Activate file path redirection to virtual sandbox
-            PathHelper.activate(this, pkg);
-
-            // Step 3: Extract and load target dex + native libraries
-            AssetLoader.loadTarget(this, pkg);
-
-            // Step 4: Initialize native engine (attach, parse metadata, start render loop)
+            // Delegate entire bootstrap to DisplayCore orchestrator
+            // DisplayCore internally creates PathHelper + OverlayPanel instances
             if (!DisplayCore.initialize(this, pkg)) {
                 showToast("Engine init failed");
                 return;
             }
 
-            // Step 5: Launch target game activity via reflection in virtual space
+            // Launch target game activity via reflection in virtual space
             Intent launchIntent = getPackageManager().getLaunchIntentForPackage(pkg);
             if (launchIntent != null) {
                 ComponentName cn = launchIntent.getComponent();
@@ -281,9 +273,12 @@ public class AppManager extends Activity {
                 startActivity(virtualIntent);
             }
 
-            // Step 6: Show overlay menu after game has time to initialize
+            // Show overlay menu after game has time to initialize
             new android.os.Handler(android.os.Looper.getMainLooper())
-                    .postDelayed(() -> OverlayPanel.show(this), 1500);
+                    .postDelayed(() -> {
+                        OverlayPanel panel = DisplayCore.getOverlayPanel();
+                        if (panel != null) panel.show();
+                    }, 1500);
 
             showToast("Launched");
 
