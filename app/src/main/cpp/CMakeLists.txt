@@ -11,6 +11,7 @@ add_library(display_utils SHARED
     asset_meta_resolve.cpp
     cache_manager.cpp
     draw_utils.cpp
+    native_bridge.cpp
 )
 
 find_library(LOG_LIB log)
