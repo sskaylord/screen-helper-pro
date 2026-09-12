@@ -109,9 +109,9 @@ extern "C" bool rt_is_hooked(void* addr) {
     return false;
 }
 
+extern "C" int rt_get_cnt() { return g_cnt; }
 extern "C" const uint8_t* rt_get_original(int index) {
 
-extern "C" int rt_get_cnt() { return g_cnt; }
     if (index < 0 || index >= g_cnt) return nullptr;
     return g_original_bytes[index];
 }

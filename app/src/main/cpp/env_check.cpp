@@ -148,7 +148,7 @@ static void checkXposedArtifacts() {
 }
 
 static void checkRootArtifacts() {
-    auto paths[] = {
+    const char* paths[] = {
         "/system/app/Superuser.apk",
         "/sbin/su",
         "/system/bin/su",
