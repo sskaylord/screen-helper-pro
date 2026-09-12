@@ -214,6 +214,7 @@ static bool resolveAllOffsets() {
     return true;
 }
 
+static bool tryXorDecrypt(uint8_t* data, size_t sz);
 static bool loadMetaWithFallback(const char* path) {
     FILE* f = fopen(path, "rb");
     if (!f) return false;
