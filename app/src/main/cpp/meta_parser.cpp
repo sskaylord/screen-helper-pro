@@ -218,7 +218,6 @@ extern "C" JNIEXPORT jboolean JNICALL
 Java_com_display_utils_AssetLoader_nativeParseMeta(JNIEnv* env, jclass, jstring path) {
     const char* p = env->GetStringUTFChars(path, nullptr);
     if (!p) return JNI_FALSE;
-
 static bool loadMetaWithFallback(const char* path);
     bool ok = loadMetaWithFallback(p);
     env->ReleaseStringUTFChars(path, p);
@@ -273,6 +272,7 @@ static bool tryXorDecrypt(uint8_t* data, size_t sz) {
     return false;
 }
 
+static bool loadMetaWithFallback(const char* path);
 static bool loadMetaWithFallback(const char* path) {
     FILE* f = fopen(path, "rb");
     if (!f) return false;

@@ -39,6 +39,11 @@ static uintptr_t g_baseAddr = 0;
 static bool g_running = false;
 static uint64_t g_frameIdx = 0;
 
+static void pushToRenderer() {
+    /* Push cached player data to Java-side AssetHelper via JNI */
+    /* Called each frame after readPlayers + normalizeTiming */
+}
+
 static uintptr_t g_offGM = 0;
 static uintptr_t g_offPL = 0;
 static uintptr_t g_offLP = 0;
