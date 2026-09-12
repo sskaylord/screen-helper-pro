@@ -120,10 +120,6 @@ Java_com_display_utils_AssetLoader_nativeReadMemory(JNIEnv* env, jclass, jlong a
     delete[] buf;
     return result;
 }
-
-extern "C" JNIEXPORT void JNICALL
-Java_com_display_utils_AssetLoader_nativeCleanMaps(JNIEnv* env, jclass) {
-    LOGI("Maps cleanup triggered");
 }
 
 extern "C" int rt_get_cnt();
