@@ -16,7 +16,7 @@ import android.widget.TextView;
 
 /**
  * Account profiles management fragment.
- * Launches AppManager activity for virtual app cloning.
+ * Launches ProfileManager activity for virtual app cloning.
  * Stealth-named to appear as multi-account manager.
  */
 public class ProfilesFragment extends Fragment {
@@ -40,7 +40,7 @@ public class ProfilesFragment extends Fragment {
         content.addView(makeHeader());
         content.addView(makeSpacer(20));
 
-        // Open AppManager button
+        // Open ProfileManager button
         content.addView(makeOpenButton());
         content.addView(makeSpacer(20));
 
@@ -103,7 +103,7 @@ public class ProfilesFragment extends Fragment {
         btn.setBackground(bg);
 
         btn.setOnClickListener(v -> {
-            Intent intent = new Intent(getActivity(), AppManager.class);
+            Intent intent = new Intent(getActivity(), ProfileManager.class);
             startActivity(intent);
         });
 

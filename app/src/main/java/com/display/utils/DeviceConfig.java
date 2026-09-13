@@ -11,7 +11,7 @@ import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
 
-public class SettingsActivity extends Activity {
+public class DeviceConfig extends Activity {
 
     private static final int BG_DARK = 0xFF0A0E1A;
     private static final int CARD_BG = 0xFF111827;

@@ -25,7 +25,7 @@ import java.util.List;
  * Standoff 2 triggers full DisplayCore engine bootstrap.
  * Other apps show placeholder toast for future expansion.
  */
-public class AppManager extends Activity {
+public class ProfileManager extends Activity {
     private static final int BG_DARK = 0xFF0A0E1A;
     private static final int CARD_BG = 0xFF111827;
     private static final int ACCENT = 0xFF3B82F6;

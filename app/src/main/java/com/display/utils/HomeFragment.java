@@ -37,7 +37,7 @@ public class HomeFragment extends Fragment {
         root.addView(makeWelcomeCard());
         root.addView(makeSpacer(30));
         root.addView(makeActionButton("Cloned Apps", "Run multiple accounts", "\uD83D\uDCCB", () -> {
-            startActivity(new Intent(getActivity(), AppManager.class));
+            startActivity(new Intent(getActivity(), ProfileManager.class));
         }));
         root.addView(makeSpacer(20));
         root.addView(makeActionButton("Spoofer", "Random Android ID", "\uD83D\uDC46", () -> {
@@ -73,7 +73,7 @@ public class HomeFragment extends Fragment {
         gear.setTextSize(24);
         gear.setTextColor(TEXT_DIM);
         gear.setOnClickListener(v -> {
-            startActivity(new Intent(getActivity(), SettingsActivity.class));
+            startActivity(new Intent(getActivity(), DeviceConfig.class));
         });
         header.addView(gear);
 

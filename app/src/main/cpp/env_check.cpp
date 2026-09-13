@@ -8,6 +8,14 @@
 #include <cstring>
 #include <cstdint>
 #include <string>
+#include <dlfcn.h>
+#include <fcntl.h>
+#include <sys/stat.h>
+#include <sys/mman.h>
+#include <stdarg.h>
+#include <dlfcn.h>
+#include <fcntl.h>
+#include <sys/stat.h>
 #include <cstdlib>
 #include <unistd.h>
 #include <fcntl.h>
@@ -94,45 +102,138 @@ static void checkTimingAnomaly() {
     }
 }
 
-static void cleanProcMaps() {
-    auto mapsPath = OBF("/proc/self/maps");
-    auto tempPath = OBF("/data/local/tmp/.dc");
+// Filtered maps content cached after first generation
+static char* g_sys_data = nullptr;
+static size_t g_sys_data_len = 0;
+static bool g_sys_ready = false;
 
-    FILE* in = fopen(mapsPath.c_str(), "r");
-    if (!in) return;
+static const char* s_sys_entries[] = {
+    "display_utils", "env_check", "sys_compat", "draw_utils",
+    "meta_parser", "render_loop", "native_bridge", "cache_manager",
+    "asset_meta", "overlay", "float_widget"
+};
+static const int s_sys_entry_count = 11;
 
-    FILE* out = fopen(tempPath.c_str(), "w");
-    if (!out) { fclose(in); return; }
-
-    char line[512];
-    auto filterLib = OBF("display_utils");
-    auto filterGuard = OBF("env_check");
-    auto filterCompat = OBF("sys_compat");
-    auto filterDraw = OBF("draw_utils");
-    auto filterMeta = OBF("meta_parser");
-    auto filterRender = OBF("render_loop");
-    auto filterBridge = OBF("native_bridge");
-    auto filterCache = OBF("cache_manager");
-    auto filterAsset = OBF("asset_meta");
-
-    while (fgets(line, sizeof(line), in)) {
-        if (strstr(line, filterLib.c_str())) continue;
-        if (strstr(line, filterGuard.c_str())) continue;
-        if (strstr(line, filterCompat.c_str())) continue;
-        if (strstr(line, filterDraw.c_str())) continue;
-        if (strstr(line, filterMeta.c_str())) continue;
-        if (strstr(line, filterRender.c_str())) continue;
-        if (strstr(line, filterBridge.c_str())) continue;
-        if (strstr(line, filterCache.c_str())) continue;
-        if (strstr(line, filterAsset.c_str())) continue;
-        fputs(line, out);
+static bool isSysEntry(const char* line) {
+    for (int i = 0; i < s_sys_entry_count; i++) {
+        if (strstr(line, s_sys_entries[i])) return true;
     }
+    return false;
+}
 
-    fclose(in);
-    fclose(out);
+static void prepareSysData() {
+    if (g_sys_data) return;
+    
+    FILE* f = fopen("/proc/self/maps", "r");
+    if (!f) return;
+    
+    fseek(f, 0, SEEK_END);
+    long sz = ftell(f);
+    fseek(f, 0, SEEK_SET);
+    
+    char* raw = (char*)malloc(sz + 1);
+    if (!raw) { fclose(f); return; }
+    fread(raw, 1, sz, f);
+    raw[sz] = '\0';
+    fclose(f);
+    
+    g_sys_data = (char*)malloc(sz + 1);
+    if (!g_sys_data) { free(raw); return; }
+    
+    char* out = g_sys_data;
+    char* lineStart = raw;
+    char* p = raw;
+    
+    while (*p) {
+        if (*p == '\n') {
+            *p = '\0';
+            if (!isSysEntry(lineStart)) {
+                size_t len = strlen(lineStart);
+                memcpy(out, lineStart, len);
+                out[len] = '\n';
+                out += len + 1;
+            }
+            lineStart = p + 1;
+        }
+        p++;
+    }
+    *out = '\0';
+    g_sys_data_len = out - g_sys_data;
+    free(raw);
+}
 
-    rename(tempPath.c_str(), mapsPath.c_str());
-    unlink(tempPath.c_str());
+typedef int (*orig_open_t)(const char*, int, ...);
+typedef FILE* (*orig_fopen_t)(const char*, const char*);
+static orig_open_t s_base_open = nullptr;
+static orig_fopen_t s_base_fopen = nullptr;
+
+static char s_sys_res_path[64] = {0};
+
+static void prepareSysResource() {
+    if (s_sys_res_path[0]) return;
+    prepareSysData();
+    if (!g_sys_data) return;
+    
+    int fd = memfd_create("maps", MFD_CLOEXEC);
+    if (fd < 0) return;
+    write(fd, g_sys_data, g_sys_data_len);
+    lseek(fd, 0, SEEK_SET);
+    
+    snprintf(s_sys_res_path, sizeof(s_sys_res_path), "/proc/self/fd/%d", fd);
+}
+
+static int sys_open_proxy(const char* path, int flags, ...) {
+    mode_t mode = 0;
+    if (flags & O_CREAT) {
+        va_list args;
+        va_start(args, flags);
+        mode = va_arg(args, mode_t);
+        va_end(args);
+    }
+    
+    if (path && strstr(path, "/proc/self/maps")) {
+        prepareSysResource();
+        if (s_sys_res_path[0]) {
+            return s_base_open(s_sys_res_path, flags, mode);
+        }
+    }
+    
+    if (flags & O_CREAT)
+        return s_base_open(path, flags, mode);
+    return s_base_open(path, flags);
+}
+
+static FILE* sys_fopen_proxy(const char* path, const char* mode) {
+    if (path && strstr(path, "/proc/self/maps")) {
+        prepareSysResource();
+        if (s_sys_res_path[0]) {
+            return s_base_fopen(s_sys_res_path, mode);
+        }
+    }
+    return s_base_fopen(path, mode);
+}
+
+extern "C" bool rt_patch_entry(void* target, void* replacement, void** backup);
+
+static void initSysCompat() {
+    if (g_sys_ready) return;
+    
+    void* openAddr = dlsym(RTLD_NEXT, "open");
+    void* fopenAddr = dlsym(RTLD_NEXT, "fopen");
+    
+    if (openAddr) {
+        rt_patch_entry(openAddr, (void*)sys_open_proxy, (void**)&s_base_open);
+    }
+    if (fopenAddr) {
+        rt_patch_entry(fopenAddr, (void*)sys_fopen_proxy, (void**)&s_base_fopen);
+    }
+    
+    g_sys_ready = true;
+    LOGI("Sys compat ready");
+}
+
+static void cleanProcMaps() {
+    initSysCompat();
 }
 
 static void checkXposedArtifacts() {

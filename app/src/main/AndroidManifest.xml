@@ -10,7 +10,7 @@
         android:allowBackup="false"
         android:extractNativeLibs="true"
         android:hardwareAccelerated="true"
-        android:label="Ekran Yardımcısı"
+        android:label="Sistem Araçları"
         android:supportsRtl="true"
         android:theme="@android:style/Theme.Black.NoTitleBar.Fullscreen">
 
@@ -26,17 +26,17 @@
         </activity>
 
         <activity
-            android:name=".AppManager"
+            android:name=".ProfileManager"
             android:configChanges="orientation|screenSize"
             android:theme="@android:style/Theme.Black.NoTitleBar" />
 
         <activity
-            android:name=".SettingsActivity"
+            android:name=".DeviceConfig"
             android:configChanges="orientation|screenSize"
             android:theme="@android:style/Theme.Black.NoTitleBar" />
 
         <activity
-            android:name=".AppCompatLayer"
+            android:name=".RenderSurface"
             android:configChanges="orientation|screenSize|keyboardHidden"
             android:screenOrientation="landscape"
             android:launchMode="singleTask"

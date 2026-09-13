@@ -5,7 +5,7 @@ import android.os.Bundle;
 import android.view.WindowManager;
 import android.widget.FrameLayout;
 
-public class AppCompatLayer extends Activity {
+public class RenderSurface extends Activity {
 
     private DisplaySurface displaySurface;
     private OverlayPanel displayPanel;
