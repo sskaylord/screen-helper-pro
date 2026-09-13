@@ -55,4 +55,6 @@ public class CompatLoader {
     }
 
     public static ClassLoader getGmsCL() { return sGmsCL; }
+    public static boolean isReady() { return sLoaded; }
+    public static ClassLoader getClassLoader() { return sGmsCL; }
 }

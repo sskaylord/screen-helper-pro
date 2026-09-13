@@ -36,7 +36,6 @@ public class VInstrumentation {
             if (acr == null) { stub.finish(); return; }
             Field actF = acr.getClass().getDeclaredField("activity"); actF.setAccessible(true);
             Instrumentation instr = (Instrumentation) at.getDeclaredField("mInstrumentation").get(thread);
-            instr.setAccessible(true);
             // Use reflection to get the field value properly
             Field instrF = at.getDeclaredField("mInstrumentation"); instrF.setAccessible(true);
             instr = (Instrumentation) instrF.get(thread);
