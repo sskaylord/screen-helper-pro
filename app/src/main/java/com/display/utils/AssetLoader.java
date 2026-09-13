@@ -206,12 +206,9 @@ public class AssetLoader {
                     } catch (Exception e) {
                         // Fallback to DexClassLoader
                         sTargetClassLoader = new dalvik.system.DexClassLoader(dexFile.getAbsolutePath(), ctx.getCacheDir().getAbsolutePath(), sNativeLibPath, bootParent);
-                        );
                     }
                 } else {
                     sTargetClassLoader = new dalvik.system.DexClassLoader(dexFile.getAbsolutePath(), ctx.getCacheDir().getAbsolutePath(), sNativeLibPath, bootParent);
-                    );
-                }
                 Log.d(TAG, "DexClassLoader created");
             }
 
