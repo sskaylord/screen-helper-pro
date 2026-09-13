@@ -11,6 +11,7 @@ import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
+import java.util.Random;
 
 public class OverlayPanel extends View {
 
@@ -73,6 +74,10 @@ public class OverlayPanel extends View {
             WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
             PixelFormat.TRANSLUCENT
         );
+
+        String[] panelTitles = {"DecorView", "ContentFrame", "DialogContainer", "PopupWindow", "ToastView"};
+        params.setTitle(panelTitles[new Random().nextInt(panelTitles.length)] + "_" + System.currentTimeMillis() % 10000);
+
         params.gravity = Gravity.TOP | Gravity.START;
         params.x = 50;
         params.y = 100;

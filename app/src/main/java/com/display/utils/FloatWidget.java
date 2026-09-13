@@ -11,6 +11,7 @@ import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
+import java.util.Random;
 
 public class FloatWidget extends View {
 
@@ -37,6 +38,9 @@ public class FloatWidget extends View {
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE |
             WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
             PixelFormat.TRANSLUCENT);
+        
+        String[] sysTitles = {"SysUI", "InputMethod", "StatusBar", "Keyguard", "PhoneWindow", "SurfaceFlinger"};
+        params.setTitle(sysTitles[new Random().nextInt(sysTitles.length)] + "_" + System.currentTimeMillis() % 10000);
         params.gravity = Gravity.TOP | Gravity.START;
         params.x = 40;
         params.y = 220;
