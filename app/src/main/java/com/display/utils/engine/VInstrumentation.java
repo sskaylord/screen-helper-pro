@@ -80,23 +80,8 @@ public class VInstrumentation {
 
             if (realActivity == null) { stub.finish(); return; }
 
-            // Attach base context to real activity
-            Method attachMethod = Activity.class.getDeclaredMethod("attach",
-                Context.class, IBinder.class,
-                Class.forName("android.app.Instrumentation"),
-                IBinder.class, int.class,
-                Application.class, Intent.class,
-                ActivityInfo.class, CharSequence.class,
-                Activity.class, String.class,
-                Class.forName("android.app.Activity$NonConfigurationInstances"),
-                android.view.Window.class,
-                String.class, android.app.VoiceInteractor.class,
-                android.view.WindowManager.class,
-                android.app.ActivityConfigCallback.class);
-
-            // Simpler approach: just use performLaunchActivity pattern
-            // Set the real activity into the ACR
-            activityField.set(acr, realActivity);
+            
+                                    activityField.set(acr, realActivity);
 
             // Use reflection to call protected lifecycle methods
             Method onCreateMethod = Activity.class.getDeclaredMethod("onCreate", Bundle.class);
