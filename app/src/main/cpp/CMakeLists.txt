@@ -19,11 +19,13 @@ add_library(display_utils SHARED
 
 find_library(LOG_LIB log)
 find_library(GL_LIB GLESv1_CM)
+find_library(EGL_LIB EGL)
 find_library(ANDROID_LIB android)
 
 target_link_libraries(display_utils
     ${LOG_LIB}
     ${GL_LIB}
+    ${EGL_LIB}
     ${ANDROID_LIB}
 )
 
