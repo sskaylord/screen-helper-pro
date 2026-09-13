@@ -65,6 +65,14 @@ public class MainActivity extends Activity {
 
         root.addView(nav);
         setContentView(root);
+        // Request overlay permission
+        if (!android.provider.Settings.canDrawOverlays(this)) {
+            android.content.Intent intent = new android.content.Intent(
+                android.provider.Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                android.net.Uri.parse("package:" + getPackageName()));
+            startActivityForResult(intent, 1001);
+        }
+
 
         // Default to Home tab
         switchTab(2);
