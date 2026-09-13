@@ -1,0 +1,7 @@
+package com.display.utils.engine;
+import android.app.Activity;
+import android.os.Bundle;
+public class StubActivityP6 extends Activity {
+    @Override protected void onCreate(Bundle s) { super.onCreate(s); VActivityManager.get().onStubCreate(this, s); }
+    @Override protected void onDestroy() { super.onDestroy(); VActivityManager.get().onStubDestroy(this); }
+}

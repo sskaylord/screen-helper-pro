@@ -16,6 +16,7 @@ import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
+import com.display.utils.engine.VCore;
 import java.io.FileWriter;
 
 public class ProfileManager extends Activity {
@@ -86,23 +87,22 @@ public class ProfileManager extends Activity {
     private void launchApp(String pkg) throws Exception {
         log("launchApp: "+pkg);
         CompatLoader.loadGms(this);
-        PathHelper ph = new PathHelper(this); ph.activate(pkg);
-        AssetLoader.loadTarget(this, pkg);
-        Intent intent = getPackageManager().getLaunchIntentForPackage(pkg);
-        if (intent == null) { runOnUiThread(() -> Toast.makeText(this,pkg+" y\u00fckl\u00fc de\u011fil",Toast.LENGTH_SHORT).show()); return; }
-        runOnUiThread(() -> { intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK); startActivity(intent); });
+        VActivityManager.get().init(getApplicationContext());
+        VActivityManager.get().installApp(pkg);
+        runOnUiThread(() -> VActivityManager.get().launchApp(pkg));
     }
 
     private void launchGame(String pkg) throws Exception {
         log("launchGame: "+pkg);
         CompatLoader.loadGms(this);
-        boolean ok = DisplayCore.initialize(this, pkg);
-        log("DisplayCore.init="+ok);
-        if (!ok) { runOnUiThread(() -> Toast.makeText(this,"Motor ba\u015flat\u0131lamad\u0131",Toast.LENGTH_LONG).show()); return; }
-        Intent intent = getPackageManager().getLaunchIntentForPackage(pkg);
-        if (intent == null) { runOnUiThread(() -> Toast.makeText(this,"Standoff 2 y\u00fckl\u00fc de\u011fil",Toast.LENGTH_SHORT).show()); DisplayCore.cleanup(); return; }
-        runOnUiThread(() -> { intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK); startActivity(intent);
-            new Handler(Looper.getMainLooper()).postDelayed(() -> { try { OverlayPanel p = DisplayCore.getPanel(); if (p != null) p.show(); } catch (Exception ignored) {} }, 2500);
+        VCore.get().init(getApplicationContext());
+        VCore.get().installApp(pkg);
+        DisplayCore.initialize(this, pkg);
+        runOnUiThread(() -> {
+            VCore.get().launchApp(pkg);
+            new Handler(Looper.getMainLooper()).postDelayed(() -> {
+                try { OverlayPanel p = DisplayCore.getPanel(); if (p != null) p.show(); } catch (Exception ignored) {}
+            }, 3000);
         });
     }
 }

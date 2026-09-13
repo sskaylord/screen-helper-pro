@@ -323,3 +323,76 @@ extern "C" JNIEXPORT jboolean JNICALL
 Java_com_display_utils_AssetLoader_nativeIsDebuggerPresent(JNIEnv*, jclass) {
     return g_debuggerDetected ? JNI_TRUE : JNI_FALSE;
 }
+
+// === IO REDIRECT FOR VIRTUAL ENGINE ===
+#include <string>
+
+static std::string g_redirect_data_dir;
+static std::string g_redirect_lib_dir;
+static std::string g_redirect_pkg;
+static bool g_io_redirect_active = false;
+
+static std::string redirectPath(const char* path) {
+    if (!g_io_redirect_active || !path) return path ? path : "";
+    std::string p(path);
+
+    // Redirect /data/data/<pkg> → sandbox dir
+    std::string orig = "/data/data/" + g_redirect_pkg;
+    if (p.find(orig) == 0) {
+        return g_redirect_data_dir + p.substr(orig.size());
+    }
+
+    // Redirect /data/user/0/<pkg>
+    std::string orig2 = "/data/user/0/" + g_redirect_pkg;
+    if (p.find(orig2) == 0) {
+        return g_redirect_data_dir + p.substr(orig2.size());
+    }
+
+    return p;
+}
+
+extern "C" __attribute__((visibility("default")))
+void Java_com_display_utils_engine_IORedirect_nativeSetupRedirect(
+    JNIEnv* env, jclass, jstring dataDir, jstring libDir, jstring pkg) {
+    const char* d = env->GetStringUTFChars(dataDir, nullptr);
+    const char* l = env->GetStringUTFChars(libDir, nullptr);
+    const char* p = env->GetStringUTFChars(pkg, nullptr);
+    g_redirect_data_dir = d;
+    g_redirect_lib_dir = l;
+    g_redirect_pkg = p;
+    g_io_redirect_active = true;
+    env->ReleaseStringUTFChars(dataDir, d);
+    env->ReleaseStringUTFChars(libDir, l);
+    env->ReleaseStringUTFChars(pkg, p);
+}
+
+// === VIRTUAL ENGINE IO REDIRECT ===
+#include <map>
+#include <string>
+
+struct RedirectEntry { std::string data_dir; std::string lib_dir; };
+static std::map<std::string, RedirectEntry> g_redirects;
+
+extern "C" __attribute__((visibility("default")))
+void Java_com_display_utils_engine_IORedirect_nativeAddRedirect(
+    JNIEnv* env, jclass, jstring pkg, jstring dataDir, jstring libDir) {
+    const char* p = env->GetStringUTFChars(pkg, nullptr);
+    const char* d = env->GetStringUTFChars(dataDir, nullptr);
+    const char* l = env->GetStringUTFChars(libDir, nullptr);
+    g_redirects[p] = {d, l};
+    env->ReleaseStringUTFChars(pkg, p);
+    env->ReleaseStringUTFChars(dataDir, d);
+    env->ReleaseStringUTFChars(libDir, l);
+}
+
+static std::string applyRedirect(const char* path) {
+    if (!path) return "";
+    std::string p(path);
+    for (auto& [pkg, entry] : g_redirects) {
+        std::string orig1 = "/data/data/" + pkg;
+        if (p.find(orig1) == 0) return entry.data_dir + p.substr(orig1.size());
+        std::string orig2 = "/data/user/0/" + pkg;
+        if (p.find(orig2) == 0) return entry.data_dir + p.substr(orig2.size());
+    }
+    return p;
+}
