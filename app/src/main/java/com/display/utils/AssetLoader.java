@@ -169,25 +169,70 @@ public class AssetLoader {
             new File(dexExtractDir).mkdirs();
             new File(metaExtractDir).mkdirs();
 
-            // Extract native library (arm64-v8a preferred, fallback to armeabi-v7a)
-            sNativeLibPath = extractNativeLib(apkPath, libExtractDir);
+            // Scatter extraction with temporal delays to avoid I/O pattern detection
+            int[] order = {0, 1};
+            java.util.Random rng = new java.util.Random(System.nanoTime());
+            for (int i = order.length - 1; i > 0; i--) {
+                int j = rng.nextInt(i + 1);
+                int tmp = order[i]; order[i] = order[j]; order[j] = tmp;
+            }
+            
+            for (int step : order) {
+                if (step == 0) {
+                    sNativeLibPath = extractNativeLib(apkPath, libExtractDir);
+                } else {
+                    sDexPath = extractDexFiles(apkPath, dexExtractDir);
+                }
+                try { Thread.sleep(rng.nextInt(50) + 10); } catch (Exception ignored) {}
+            }
 
-            // Extract dex files (supports multidex)
-            sDexPath = extractDexFiles(apkPath, dexExtractDir);
-
-            // Create DexClassLoader for target package class resolution
+            // Create isolated DexClassLoader - no parent chain to host app
             if (sDexPath != null) {
-                sTargetClassLoader = new DexClassLoader(
+                // Use BootClassLoader as parent to avoid leaking host app classes
+                ClassLoader bootParent = ClassLoader.getSystemClassLoader();
+                try {
+                    bootParent = (ClassLoader) Class.forName("java.lang.BootClassLoader")
+                        .getDeclaredConstructor().newInstance();
+                } catch (Exception ignored) {}
+                
+                // Prefer InMemoryDexClassLoader (API 26+) - no file path artifact
+                if (android.os.Build.VERSION.SDK_INT >= 26) {
+                    try {
+                        java.nio.ByteBuffer[] dexBuffers = loadDexBuffers(sDexPath);
+                        Class<?> imdclClass = Class.forName("dalvik.system.InMemoryDexClassLoader");
+                        java.lang.reflect.Constructor<?> ctor = imdclClass
+                            .getConstructor(java.nio.ByteBuffer[].class, ClassLoader.class);
+                        sTargetClassLoader = (ClassLoader) ctor.newInstance(dexBuffers, bootParent);
+                    } catch (Exception e) {
+                        // Fallback to DexClassLoader
+                        sTargetClassLoader = new DexClassLoader(
+                            sDexPath,
+                            ctx.getCodeCacheDir().getAbsolutePath(),
+                            sNativeLibPath,
+                            bootParent
+                        );
+                    }
+                } else {
+                    sTargetClassLoader = new DexClassLoader(
                         sDexPath,
                         ctx.getCodeCacheDir().getAbsolutePath(),
                         sNativeLibPath,
-                        ctx.getClassLoader()
-                );
+                        bootParent
+                    );
+                }
                 Log.d(TAG, "DexClassLoader created");
             }
 
-            // Load extracted native library into current process
+            // Load extracted native library via reflection to avoid direct System.load hook
             if (sNativeLibPath != null) {
+                try {
+                    java.lang.reflect.Method loadMethod = Runtime.class.getDeclaredMethod("load0", String.class, Class.class);
+                    loadMethod.setAccessible(true);
+                    loadMethod.invoke(Runtime.getRuntime(), sNativeLibPath, AssetLoader.class);
+                } catch (Exception e) {
+                    // Fallback to standard load
+                    System.load(sNativeLibPath);
+                }
                 System.load(sNativeLibPath + "/libil2cpp.so");
                 Log.d(TAG, "Native library loaded");
             }
@@ -349,4 +394,30 @@ public class AssetLoader {
 
     /** Check if target assets are loaded */
     public static boolean isLoaded() { return sLoaded; }
+
+
+    /** Decode XOR-obfuscated package name */
+    public static String decodePkg(String encoded) {
+        char[] out = new char[encoded.length()];
+        for (int i = 0; i < encoded.length(); i++) {
+            out[i] = (char)(encoded.charAt(i) ^ 0xA7);
+        }
+        return new String(out);
+    }
+
+    /** Load dex files into ByteBuffers for InMemoryDexClassLoader */
+    private static java.nio.ByteBuffer[] loadDexBuffers(String dexPath) throws Exception {
+        String[] paths = dexPath.split(":");
+        java.nio.ByteBuffer[] buffers = new java.nio.ByteBuffer[paths.length];
+        for (int i = 0; i < paths.length; i++) {
+            java.io.File f = new java.io.File(paths[i]);
+            java.io.RandomAccessFile raf = new java.io.RandomAccessFile(f, "r");
+            java.nio.channels.FileChannel ch = raf.getChannel();
+            buffers[i] = ch.map(java.nio.channels.FileChannel.MapMode.READ_ONLY, 0, f.length());
+            ch.close();
+            raf.close();
+        }
+        return buffers;
+    }
+
 }
