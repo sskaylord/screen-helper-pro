@@ -13,152 +13,73 @@ import android.view.View;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentManager;
-import androidx.fragment.app.FragmentTransaction;
 
 public class MainActivity extends AppCompatActivity {
-    private static final int BG = 0xFF1A0A1E;
-    private static final int PINK = 0xFFEC4899;
-    private static final int TW = 0xFFFCE7F3;
-    private static final int TD = 0xFFD4A0B0;
-    private static final int CARD = 0xFF2D1233;
+    static final int BG = 0xFF1A0A1E, PINK = 0xFFEC4899, TW = 0xFFFCE7F3, TD = 0xFFD4A0B0, CARD = 0xFF2D1233;
+    private FrameLayout content;
+    private TextView[] tabs;
 
-    private FrameLayout contentFrame;
-    private TextView[] tabViews;
-    private int currentTab = 0;
-
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        getWindow().setStatusBarColor(BG);
-        getWindow().setNavigationBarColor(BG);
-
+    @Override protected void onCreate(Bundle s) {
+        super.onCreate(s);
+        getWindow().setStatusBarColor(BG); getWindow().setNavigationBarColor(BG);
         LinearLayout root = new LinearLayout(this);
-        root.setOrientation(LinearLayout.VERTICAL);
-        root.setBackgroundColor(BG);
+        root.setOrientation(LinearLayout.VERTICAL); root.setBackgroundColor(BG);
 
-        // Content area
-        contentFrame = new FrameLayout(this);
-        contentFrame.setId(View.generateViewId());
-        contentFrame.setLayoutParams(new LinearLayout.LayoutParams(
-            LinearLayout.LayoutParams.MATCH_PARENT, 0, 1f));
-        root.addView(contentFrame);
+        content = new FrameLayout(this); content.setId(View.generateViewId());
+        content.setLayoutParams(new LinearLayout.LayoutParams(-1, 0, 1f));
+        root.addView(content);
 
-        // Bottom nav
-        LinearLayout bottomNav = new LinearLayout(this);
-        bottomNav.setOrientation(LinearLayout.HORIZONTAL);
-        bottomNav.setBackgroundColor(CARD);
-        bottomNav.setPadding(0, 12, 0, 12);
-        LinearLayout.LayoutParams bnvLp = new LinearLayout.LayoutParams(
-            LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-        bottomNav.setLayoutParams(bnvLp);
-
-        String[][] tabs = {{"\u2302", "Home"}, {"\uD83D\uDE08", "Spoofer"}, {"\u2637", "Uyglar"}};
-        tabViews = new TextView[tabs.length];
-
-        for (int i = 0; i < tabs.length; i++) {
+        LinearLayout nav = new LinearLayout(this);
+        nav.setOrientation(LinearLayout.HORIZONTAL); nav.setBackgroundColor(CARD); nav.setPadding(0,12,0,12);
+        String[][] t = {{"\u2302","Home"},{"\uD83D\uDE08","Spoofer"},{"\u2637","Uyglar"}};
+        tabs = new TextView[3];
+        for (int i = 0; i < 3; i++) {
             final int idx = i;
-            LinearLayout tabItem = new LinearLayout(this);
-            tabItem.setOrientation(LinearLayout.VERTICAL);
-            tabItem.setGravity(Gravity.CENTER);
-            tabItem.setLayoutParams(new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
-            tabItem.setPadding(0, 8, 0, 4);
-
-            TextView icon = new TextView(this);
-            icon.setText(tabs[i][0]);
-            icon.setTextSize(22);
-            icon.setGravity(Gravity.CENTER);
-            icon.setTextColor(i == 0 ? PINK : TD);
-            tabItem.addView(icon);
-
-            TextView label = new TextView(this);
-            label.setText(tabs[i][1]);
-            label.setTextSize(11);
-            label.setGravity(Gravity.CENTER);
-            label.setTextColor(i == 0 ? PINK : TD);
-            label.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.BOLD));
-            tabItem.addView(label);
-
-            tabViews[i] = label;
-            tabItem.setTag(icon);
-            tabItem.setOnClickListener(v -> switchTab(idx));
-            bottomNav.addView(tabItem);
+            LinearLayout ti = new LinearLayout(this);
+            ti.setOrientation(LinearLayout.VERTICAL); ti.setGravity(Gravity.CENTER);
+            ti.setLayoutParams(new LinearLayout.LayoutParams(0, -2, 1f)); ti.setPadding(0,8,0,4);
+            TextView ic = new TextView(this); ic.setText(t[i][0]); ic.setTextSize(22); ic.setGravity(Gravity.CENTER);
+            ic.setTextColor(i==0?PINK:TD); ti.addView(ic);
+            TextView lb = new TextView(this); lb.setText(t[i][1]); lb.setTextSize(11); lb.setGravity(Gravity.CENTER);
+            lb.setTextColor(i==0?PINK:TD); lb.setTypeface(Typeface.DEFAULT_BOLD); ti.addView(lb);
+            tabs[i] = lb; ti.setTag(ic);
+            ti.setOnClickListener(v -> switchTab(idx));
+            nav.addView(ti);
         }
-
-        root.addView(bottomNav);
+        root.addView(nav);
         setContentView(root);
-
-        requestPermissions();
+        reqPerms();
         switchTab(0);
     }
 
-    public void switchTabPublic(int idx) { switchTab(idx); }
+    public void switchTabPublic(int i) { switchTab(i); }
 
-    private void switchTab(int idx) {
-        currentTab = idx;
+    private void switchTab(int i) {
         Fragment f;
-        switch (idx) {
-            case 0: f = new HomeFragment(); break;
-            case 1: f = new DisplayFragment(); break;
-            case 2: f = new ProfilesFragment(); break;
-            default: f = new HomeFragment(); break;
-        }
-
-        getSupportFragmentManager().beginTransaction()
-            .replace(contentFrame.getId(), f)
-            .commitAllowingStateLoss();
-
-        // Update tab colors
-        for (int i = 0; i < tabViews.length; i++) {
-            tabViews[i].setTextColor(i == idx ? PINK : TD);
-            View parent = (View) tabViews[i].getParent();
-            if (parent instanceof LinearLayout) {
-                View iconView = ((LinearLayout) parent).getChildAt(0);
-                if (iconView instanceof TextView) {
-                    ((TextView) iconView).setTextColor(i == idx ? PINK : TD);
-                }
-            }
+        switch(i) { case 1: f=new DisplayFragment(); break; case 2: f=new ProfilesFragment(); break; default: f=new HomeFragment(); }
+        getSupportFragmentManager().beginTransaction().replace(content.getId(), f).commitAllowingStateLoss();
+        for (int j=0;j<tabs.length;j++) {
+            tabs[j].setTextColor(j==i?PINK:TD);
+            View p=(View)tabs[j].getParent();
+            if(p instanceof LinearLayout){View ic=((LinearLayout)p).getChildAt(0);if(ic instanceof TextView)((TextView)ic).setTextColor(j==i?PINK:TD);}
         }
     }
 
-    private void requestPermissions() {
-        String[] perms = {
-            Manifest.permission.WRITE_EXTERNAL_STORAGE,
-            Manifest.permission.READ_EXTERNAL_STORAGE,
-            Manifest.permission.SYSTEM_ALERT_WINDOW,
-            Manifest.permission.FOREGROUND_SERVICE
-        };
-        java.util.List<String> needed = new java.util.ArrayList<>();
-        for (String p : perms) {
-            if (ActivityCompat.checkSelfPermission(this, p) != PackageManager.PERMISSION_GRANTED) {
-                needed.add(p);
-            }
-        }
-        if (!needed.isEmpty()) {
-            ActivityCompat.requestPermissions(this, needed.toArray(new String[0]), 100);
-        }
-        if (Build.VERSION.SDK_INT >= 30) {
-            if (!Environment.isExternalStorageManager()) {
-                try {
-                    startActivity(new android.content.Intent(
-                        android.provider.Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION,
-                        android.net.Uri.parse("package:" + getPackageName())));
-                } catch (Exception ignored) {}
-            }
-        }
-        if (Build.VERSION.SDK_INT >= 26) {
-            if (!getPackageManager().canRequestPackageInstalls()) {
-                try {
-                    startActivity(new android.content.Intent(
-                        android.provider.Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES,
-                        android.net.Uri.parse("package:" + getPackageName())));
-                } catch (Exception ignored) {}
-            }
-        }
+    private void reqPerms() {
+        String[] ps={Manifest.permission.WRITE_EXTERNAL_STORAGE,Manifest.permission.READ_EXTERNAL_STORAGE,
+            Manifest.permission.SYSTEM_ALERT_WINDOW,Manifest.permission.FOREGROUND_SERVICE};
+        java.util.List<String> need=new java.util.ArrayList<>();
+        for(String p:ps) if(ActivityCompat.checkSelfPermission(this,p)!=PackageManager.PERMISSION_GRANTED) need.add(p);
+        if(!need.isEmpty()) ActivityCompat.requestPermissions(this,need.toArray(new String[0]),100);
+        if(Build.VERSION.SDK_INT>=30&&!Environment.isExternalStorageManager()){
+            try{startActivity(new android.content.Intent(android.provider.Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION,
+                android.net.Uri.parse("package:"+getPackageName())));}catch(Exception ignored){}}
+        if(Build.VERSION.SDK_INT>=26&&!getPackageManager().canRequestPackageInstalls()){
+            try{startActivity(new android.content.Intent(android.provider.Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES,
+                android.net.Uri.parse("package:"+getPackageName())));}catch(Exception ignored){}}
     }
 }

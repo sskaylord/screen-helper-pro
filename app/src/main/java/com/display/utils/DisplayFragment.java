@@ -4,192 +4,72 @@ import android.graphics.Color;
 import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
-import android.view.Gravity;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.LinearLayout;
-import android.widget.ScrollView;
-import android.widget.TextView;
-import android.widget.Toast;
-
+import android.view.*;
+import android.widget.*;
 import androidx.fragment.app.Fragment;
-
 import java.util.UUID;
 
 public class DisplayFragment extends Fragment {
-    private static final int BG = 0xFF1A0A1E;
-    private static final int CARD = 0xFF2D1233;
-    private static final int PINK = 0xFFEC4899;
-    private static final int TW = 0xFFFCE7F3;
-    private static final int TD = 0xFFD4A0B0;
+    int dp(int v){return(int)(v*getResources().getDisplayMetrics().density);}
+    TextView idTxt;
 
-    private TextView androidIdText;
+    LinearLayout card(){
+        LinearLayout c=new LinearLayout(requireContext());c.setPadding(dp(14),dp(12),dp(14),dp(12));
+        LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(-1,-2);lp.bottomMargin=dp(8);c.setLayoutParams(lp);
+        GradientDrawable bg=new GradientDrawable();bg.setColor(MainActivity.CARD);bg.setCornerRadius(dp(12));c.setBackground(bg);return c;
+    }
 
-    @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        ScrollView scroll = new ScrollView(requireContext());
-        scroll.setBackgroundColor(BG);
+    TextView btn(String t){
+        TextView b=new TextView(requireContext());b.setText(t);b.setTextColor(Color.WHITE);b.setTextSize(15);
+        b.setTypeface(Typeface.DEFAULT_BOLD);b.setGravity(Gravity.CENTER);b.setPadding(0,dp(14),0,dp(14));
+        LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(-1,-2);lp.topMargin=dp(12);b.setLayoutParams(lp);
+        GradientDrawable bg=new GradientDrawable();bg.setColor(MainActivity.PINK);bg.setCornerRadius(dp(14));b.setBackground(bg);return b;
+    }
 
-        LinearLayout root = new LinearLayout(requireContext());
-        root.setOrientation(LinearLayout.VERTICAL);
-        root.setBackgroundColor(BG);
-        root.setPadding(dp(16), dp(16), dp(16), dp(16));
+    @Override public View onCreateView(LayoutInflater li, ViewGroup c, Bundle s) {
+        ScrollView sv=new ScrollView(requireContext());sv.setBackgroundColor(MainActivity.BG);
+        LinearLayout r=new LinearLayout(requireContext());r.setOrientation(LinearLayout.VERTICAL);
+        r.setBackgroundColor(MainActivity.BG);r.setPadding(dp(16),dp(16),dp(16),dp(16));
 
-        // Title
-        TextView title = new TextView(requireContext());
-        title.setText("Spoofer");
-        title.setTextColor(TW);
-        title.setTextSize(20);
-        title.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.BOLD));
-        title.setPadding(0, 0, 0, dp(16));
-        root.addView(title);
+        TextView title=new TextView(requireContext());title.setText("Spoofer");title.setTextColor(MainActivity.TW);
+        title.setTextSize(20);title.setTypeface(Typeface.DEFAULT_BOLD);title.setPadding(0,0,0,dp(16));r.addView(title);
 
-        // Random Android ID card
-        LinearLayout idCard = makeCard();
-        idCard.setOrientation(LinearLayout.HORIZONTAL);
-        idCard.setGravity(Gravity.CENTER_VERTICAL);
+        // ID card
+        LinearLayout ic=card();ic.setOrientation(LinearLayout.HORIZONTAL);ic.setGravity(Gravity.CENTER_VERTICAL);
+        TextView ii=new TextView(requireContext());ii.setText("\uD83D\uDE08");ii.setTextSize(24);ii.setPadding(0,0,dp(12),0);ic.addView(ii);
+        LinearLayout it=new LinearLayout(requireContext());it.setOrientation(LinearLayout.VERTICAL);
+        it.setLayoutParams(new LinearLayout.LayoutParams(0,-2,1f));
+        TextView i1=new TextView(requireContext());i1.setText("Rastgele Android ID");i1.setTextColor(MainActivity.TW);i1.setTextSize(14);i1.setTypeface(Typeface.DEFAULT_BOLD);it.addView(i1);
+        TextView i2=new TextView(requireContext());i2.setText("Her a\u00e7\u0131l\u0131\u015fta yeni ID olu\u015fturur");i2.setTextColor(MainActivity.TD);i2.setTextSize(11);it.addView(i2);
+        ic.addView(it);
+        TextView tg=new TextView(requireContext());tg.setText("\u25CF");tg.setTextColor(MainActivity.PINK);tg.setTextSize(20);ic.addView(tg);
+        r.addView(ic);
 
-        TextView idIcon = new TextView(requireContext());
-        idIcon.setText("\uD83D\uDE08");
-        idIcon.setTextSize(24);
-        idIcon.setPadding(0, 0, dp(12), 0);
-        idCard.addView(idIcon);
+        // ID row
+        LinearLayout ir=card();ir.setOrientation(LinearLayout.HORIZONTAL);ir.setGravity(Gravity.CENTER_VERTICAL);
+        TextView il=new TextView(requireContext());il.setText("Android ID");il.setTextColor(MainActivity.TD);il.setTextSize(13);
+        il.setLayoutParams(new LinearLayout.LayoutParams(0,-2,1f));ir.addView(il);
+        idTxt=new TextView(requireContext());idTxt.setText(UUID.randomUUID().toString().substring(0,18)+"...");
+        idTxt.setTextColor(MainActivity.TW);idTxt.setTextSize(12);ir.addView(idTxt);r.addView(ir);
 
-        LinearLayout idTexts = new LinearLayout(requireContext());
-        idTexts.setOrientation(LinearLayout.VERTICAL);
-        idTexts.setLayoutParams(new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
+        TextView gb=btn("+ Rastgele ID Olu\u015ftur");
+        gb.setOnClickListener(v->{idTxt.setText(UUID.randomUUID().toString().substring(0,18)+"...");
+            Toast.makeText(requireContext(),"Yeni ID olu\u015fturuldu",Toast.LENGTH_SHORT).show();});
+        r.addView(gb);
 
-        TextView idTitle = new TextView(requireContext());
-        idTitle.setText("Rastgele Android ID");
-        idTitle.setTextColor(TW);
-        idTitle.setTextSize(14);
-        idTitle.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.BOLD));
-        idTexts.addView(idTitle);
-
-        TextView idSub = new TextView(requireContext());
-        idSub.setText("Her a\u00e7\u0131l\u0131\u015fta yeni ID olu\u015fturur");
-        idSub.setTextColor(TD);
-        idSub.setTextSize(11);
-        idTexts.addView(idSub);
-
-        idCard.addView(idTexts);
-
-        // Toggle placeholder
-        TextView toggle = new TextView(requireContext());
-        toggle.setText("\u25CF");
-        toggle.setTextColor(PINK);
-        toggle.setTextSize(20);
-        idCard.addView(toggle);
-
-        root.addView(idCard);
-
-        // Android ID display
-        LinearLayout idRow = makeCard();
-        idRow.setOrientation(LinearLayout.HORIZONTAL);
-        idRow.setGravity(Gravity.CENTER_VERTICAL);
-
-        TextView idLabel = new TextView(requireContext());
-        idLabel.setText("Android ID");
-        idLabel.setTextColor(TD);
-        idLabel.setTextSize(13);
-        idLabel.setLayoutParams(new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
-        idRow.addView(idLabel);
-
-        androidIdText = new TextView(requireContext());
-        androidIdText.setText(UUID.randomUUID().toString().substring(0, 18) + "...");
-        androidIdText.setTextColor(TW);
-        androidIdText.setTextSize(12);
-        idRow.addView(androidIdText);
-
-        root.addView(idRow);
-
-        // Generate button
-        TextView genBtn = makeButton("+ Rastgele ID Olu\u015ftur");
-        genBtn.setOnClickListener(v -> {
-            androidIdText.setText(UUID.randomUUID().toString().substring(0, 18) + "...");
-            Toast.makeText(requireContext(), "Yeni ID olu\u015fturuldu", Toast.LENGTH_SHORT).show();
-        });
-        root.addView(genBtn);
-
-        // Device info rows
-        String[][] rows = {
-            {"Cihaz Modeli", "Random"},
-            {"Manufacturer", "Random"},
-            {"Android Versiyon", "Random"},
-            {"IMEI (SIM)", "Random"},
-            {"MAC Adresi", "Random"}
-        };
-
-        for (String[] row : rows) {
-            LinearLayout r = makeCard();
-            r.setOrientation(LinearLayout.HORIZONTAL);
-            r.setGravity(Gravity.CENTER_VERTICAL);
-
-            TextView name = new TextView(requireContext());
-            name.setText(row[0]);
-            name.setTextColor(TW);
-            name.setTextSize(13);
-            name.setLayoutParams(new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
-            r.addView(name);
-
-            TextView val = new TextView(requireContext());
-            val.setText(row[1]);
-            val.setTextColor(TD);
-            val.setTextSize(12);
-            r.addView(val);
-
-            TextView arr = new TextView(requireContext());
-            arr.setText("\u203A");
-            arr.setTextColor(TD);
-            arr.setTextSize(16);
-            arr.setPadding(dp(8), 0, 0, 0);
-            r.addView(arr);
-
-            root.addView(r);
+        String[][] rows={{"Cihaz Modeli","Random"},{"Manufacturer","Random"},{"Android Versiyon","Random"},{"IMEI (SIM)","Random"},{"MAC Adresi","Random"}};
+        for(String[] row:rows){
+            LinearLayout rr=card();rr.setOrientation(LinearLayout.HORIZONTAL);rr.setGravity(Gravity.CENTER_VERTICAL);
+            TextView n=new TextView(requireContext());n.setText(row[0]);n.setTextColor(MainActivity.TW);n.setTextSize(13);
+            n.setLayoutParams(new LinearLayout.LayoutParams(0,-2,1f));rr.addView(n);
+            TextView val=new TextView(requireContext());val.setText(row[1]);val.setTextColor(MainActivity.TD);val.setTextSize(12);rr.addView(val);
+            TextView ar=new TextView(requireContext());ar.setText("\u203A");ar.setTextColor(MainActivity.TD);ar.setTextSize(16);ar.setPadding(dp(8),0,0,0);rr.addView(ar);
+            r.addView(rr);
         }
 
-        // Apply button
-        TextView applyBtn = makeButton("Uygula");
-        applyBtn.setOnClickListener(v -> Toast.makeText(requireContext(), "Spoofing uyguland\u0131", Toast.LENGTH_SHORT).show());
-        root.addView(applyBtn);
-
-        scroll.addView(root);
-        return scroll;
+        TextView ab=btn("Uygula");
+        ab.setOnClickListener(v->Toast.makeText(requireContext(),"Spoofing uyguland\u0131",Toast.LENGTH_SHORT).show());
+        r.addView(ab);
+        sv.addView(r);return sv;
     }
-
-    private LinearLayout makeCard() {
-        LinearLayout card = new LinearLayout(requireContext());
-        card.setPadding(dp(14), dp(12), dp(14), dp(12));
-        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
-            LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-        lp.bottomMargin = dp(8);
-        card.setLayoutParams(lp);
-        GradientDrawable bg = new GradientDrawable();
-        bg.setColor(CARD);
-        bg.setCornerRadius(dp(12));
-        card.setBackground(bg);
-        return card;
-    }
-
-    private TextView makeButton(String text) {
-        TextView btn = new TextView(requireContext());
-        btn.setText(text);
-        btn.setTextColor(Color.WHITE);
-        btn.setTextSize(15);
-        btn.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.BOLD));
-        btn.setGravity(Gravity.CENTER);
-        btn.setPadding(0, dp(14), 0, dp(14));
-        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
-            LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-        lp.topMargin = dp(12);
-        btn.setLayoutParams(lp);
-        GradientDrawable bg = new GradientDrawable();
-        bg.setColor(PINK);
-        bg.setCornerRadius(dp(14));
-        btn.setBackground(bg);
-        return btn;
-    }
-
-    private int dp(int v) { return (int)(v * getResources().getDisplayMetrics().density); }
 }

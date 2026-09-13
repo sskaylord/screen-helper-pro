@@ -1,50 +1,25 @@
 package com.display.utils.engine;
 
-import android.app.Application;
 import android.content.Context;
-import android.util.Log;
+import java.util.List;
 
 public class VCore {
-    private static final String TAG = "VCore";
-    private static VCore sInstance;
-    private Context mContext;
-    private boolean mInitialized;
-
+    private static VCore s;
+    private Context ctx;
+    private boolean ready;
     private VCore() {}
+    public static VCore get() { if (s == null) s = new VCore(); return s; }
 
-    public static VCore get() {
-        if (sInstance == null) sInstance = new VCore();
-        return sInstance;
-    }
-
-    public void init(Context ctx) {
-        if (mInitialized) return;
-        mContext = ctx.getApplicationContext();
-        VActivityManager.get().init(mContext);
-        VPackageManager.get().init(mContext);
+    public void init(Context c) {
+        if (ready) return;
+        ctx = c.getApplicationContext();
+        VActivityManager.get().init(ctx);
         IORedirect.init();
-        mInitialized = true;
-        Log.i(TAG, "VCore initialized");
+        ready = true;
     }
 
-    public boolean isInitialized() { return mInitialized; }
-    public Context getContext() { return mContext; }
-
-    public boolean installApp(String pkg) {
-        if (!mInitialized) init(mContext);
-        return VActivityManager.get().installApp(pkg);
-    }
-
-    public void launchApp(String pkg) {
-        if (!mInitialized) init(mContext);
-        VActivityManager.get().launchApp(pkg);
-    }
-
-    public boolean isInstalled(String pkg) {
-        return VActivityManager.get().isInstalled(pkg);
-    }
-
-    public void uninstallApp(String pkg) {
-        VActivityManager.get().uninstallApp(pkg);
-    }
+    public boolean installApp(String pkg) { return VActivityManager.get().installApp(pkg); }
+    public void launchApp(String pkg) { VActivityManager.get().launchApp(pkg); }
+    public boolean isInstalled(String pkg) { return VActivityManager.get().isInstalled(pkg); }
+    public List<VActivityManager.SandboxRecord> getApps() { return VActivityManager.get().getInstalledApps(); }
 }

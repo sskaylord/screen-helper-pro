@@ -3,73 +3,50 @@ package com.display.utils.engine;
 import android.content.Context;
 import android.util.Log;
 import dalvik.system.DexClassLoader;
-
 import java.io.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 public class VClassLoader {
-    private static final String TAG = "VCL";
-    private static DexClassLoader sTargetCL;
-    private static String sCurrentPkg;
+    private static DexClassLoader cl;
 
-    public static synchronized void loadApk(Context ctx, String apkPath, String nativeLibDir, String cacheDir) throws Exception {
-        if (sTargetCL != null) return;
-
+    public static synchronized void load(Context ctx, String apk, String libDir, String cacheDir) throws Exception {
+        if (cl != null) return;
         new File(cacheDir).mkdirs();
-
-        sTargetCL = new DexClassLoader(apkPath, cacheDir, nativeLibDir, ctx.getClassLoader());
-        Log.i(TAG, "Loaded: " + apkPath);
+        cl = new DexClassLoader(apk, cacheDir, libDir, ctx.getClassLoader());
+        Log.i("VCL", "Loaded: " + apk);
     }
 
-    public static ClassLoader getTargetClassLoader() { return sTargetCL; }
+    public static ClassLoader getCL() { return cl; }
 
-    public static void reset() {
-        sTargetCL = null;
-        sCurrentPkg = null;
-    }
-
-    public static void extractNativeLibs(String apkPath, String destDir) throws Exception {
-        File dest = new File(destDir);
-        dest.mkdirs();
-
-        ZipFile zip = new ZipFile(apkPath);
-        String[] archs = {"arm64-v8a", "armeabi-v7a"};
+    public static void extractLibs(String apk, String dest) throws Exception {
+        File d = new File(dest); d.mkdirs();
+        ZipFile z = new ZipFile(apk);
         String arch = null;
-
-        // Detect preferred arch
-        for (String a : archs) {
-            var entries = zip.entries();
-            while (entries.hasMoreElements()) {
-                if (entries.nextElement().getName().startsWith("lib/" + a + "/")) {
-                    arch = a; break;
-                }
+        for (String a : new String[]{"arm64-v8a", "armeabi-v7a"}) {
+            var en = z.entries();
+            while (en.hasMoreElements()) {
+                if (en.nextElement().getName().startsWith("lib/" + a + "/")) { arch = a; break; }
             }
             if (arch != null) break;
         }
-
-        if (arch == null) { zip.close(); return; }
-
-        var entries = zip.entries();
-        while (entries.hasMoreElements()) {
-            ZipEntry entry = entries.nextElement();
-            String name = entry.getName();
-            if (name.startsWith("lib/" + arch + "/") && name.endsWith(".so") && !entry.isDirectory()) {
-                String soName = name.substring(name.lastIndexOf('/') + 1);
-                File out = new File(destDir, soName);
+        if (arch == null) { z.close(); return; }
+        var en = z.entries();
+        while (en.hasMoreElements()) {
+            ZipEntry e = en.nextElement();
+            String n = e.getName();
+            if (n.startsWith("lib/" + arch + "/") && n.endsWith(".so") && !e.isDirectory()) {
+                File out = new File(dest, n.substring(n.lastIndexOf('/') + 1));
                 if (!out.exists()) {
-                    InputStream is = zip.getInputStream(entry);
+                    InputStream is = z.getInputStream(e);
                     FileOutputStream fos = new FileOutputStream(out);
-                    byte[] buf = new byte[8192];
-                    int n;
-                    while ((n = is.read(buf)) > 0) fos.write(buf, 0, n);
+                    byte[] b = new byte[8192]; int r;
+                    while ((r = is.read(b)) > 0) fos.write(b, 0, r);
                     fos.close(); is.close();
-                    out.setReadable(true, false);
-                    out.setExecutable(true, false);
+                    out.setReadable(true, false); out.setExecutable(true, false);
                 }
             }
         }
-        zip.close();
-        Log.i(TAG, "Native libs extracted to " + destDir);
+        z.close();
     }
 }
