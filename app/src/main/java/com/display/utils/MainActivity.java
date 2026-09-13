@@ -1,9 +1,10 @@
 package com.display.utils;
 
 import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
+import androidx.fragment.app.FragmentTransaction;
 
 import android.app.Activity;
-import android.app.Fragment;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.view.Gravity;
@@ -122,7 +123,7 @@ public class MainActivity extends Activity {
                 break;
         }
 
-        getFragmentManager().beginTransaction()
+        getSupportFragmentManager().beginTransaction()
                 .replace(contentFrame.getId(), f)
                 .commitAllowingStateLoss();
     }

@@ -168,7 +168,7 @@ public class HomeFragment extends Fragment {
         spArrow.setTextSize(24);
         spooferCard.addView(spArrow);
 
-        spooferCard.setOnClickListener(v -> ((com.display.utils.MainActivity) requireActivity()).switchTabPublic(1));
+        spooferCard.setOnClickListener(v -> startActivity(new android.content.Intent(getActivity(), com.display.utils.ProfileManager.class)));
         root.addView(spooferCard);
 
         // === FAB (+ button) ===
