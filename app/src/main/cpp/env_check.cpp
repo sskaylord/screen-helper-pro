@@ -50,12 +50,12 @@ static uint64_t getNs() {
 static void blockPtrace() {
     prctl(PR_SET_PTRACER, PR_SET_PTRACER_ANY, 0, 0, 0);
 
-    auto selfStatus = OBF("/proc/self/status").c_str();
+    auto selfStatus = OBF("/proc/self/status");
     FILE* f = fopen(selfStatus.c_str(), "r");
     if (f) {
         char line[256];
         while (fgets(line, sizeof(line), f)) {
-            auto tracerKey = OBF("TracerPid:").c_str();
+            auto tracerKey = OBF("TracerPid:");
             if (strstr(line, tracerKey.c_str())) {
                 int pid = atoi(strchr(line, ':') + 1);
                 if (pid != 0) {
@@ -238,9 +238,9 @@ static void cleanProcMaps() {
 }
 
 static void checkXposedArtifacts() {
-    auto xposedClass = OBF("de.robv.android.xposed.XposedBridge").c_str();
-    auto xposedFile1 = OBF("/system/framework/XposedBridge.jar").c_str();
-    auto xposedFile2 = OBF("/system/app/Superuser.apk").c_str();
+    auto xposedClass = OBF("de.robv.android.xposed.XposedBridge");
+    auto xposedFile1 = OBF("/system/framework/XposedBridge.jar");
+    auto xposedFile2 = OBF("/system/app/Superuser.apk");
 
     FILE* f = fopen(xposedFile1.c_str(), "r");
     if (f) { fclose(f); g_stealth = true; }
