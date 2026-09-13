@@ -39,9 +39,11 @@ static uintptr_t g_baseAddr = 0;
 static bool g_running = false;
 static uint64_t g_frameIdx = 0;
 
+extern "C" void drawUtils_updatePlayers(const float* viewMat, const void* players, int count);
+
 static void pushToRenderer() {
-    /* Push cached player data to Java-side AssetHelper via JNI */
-    /* Called each frame after readPlayers + normalizeTiming */
+    if (!g_running || g_count <= 0) return;
+    drawUtils_updatePlayers(g_viewMat, g_data, g_count);
 }
 
 static uintptr_t g_offGM = 0;

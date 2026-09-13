@@ -71,6 +71,29 @@ static void drawHealthBar(float cx, float cy, float w, float h, float hp) {
     drawLine(cx - w/2 - 6, cy, cx - w/2 - 6, cy - barH, r, g, 0.f);
 }
 
+struct PlayerDataSource {
+    float px, py, pz;
+    float health;
+    int team;
+    bool alive;
+    bool valid;
+    uint64_t lastRead;
+};
+
+extern "C" void drawUtils_updatePlayers(const float* viewMat, const void* players, int count) {
+    memcpy(g_viewMatrix, viewMat, sizeof(float) * 16);
+    g_playerCount = count > 64 ? 64 : count;
+    const PlayerDataSource* src = (const PlayerDataSource*)players;
+    for (int i = 0; i < g_playerCount; i++) {
+        g_players[i].pos.x = src[i].px;
+        g_players[i].pos.y = src[i].py;
+        g_players[i].pos.z = src[i].pz;
+        g_players[i].health = src[i].health;
+        g_players[i].team = src[i].team;
+        g_players[i].valid = src[i].valid;
+    }
+}
+
 static void renderFrame() {
     if (!g_initialized || !g_overlayOn) return;
     glClear(GL_COLOR_BUFFER_BIT);
