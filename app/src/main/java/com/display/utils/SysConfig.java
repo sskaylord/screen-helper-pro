@@ -1,6 +1,7 @@
 package com.display.utils;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.Build;
 import android.util.Log;
 
@@ -75,22 +76,39 @@ public class SysConfig {
      *
      * @param ctx Application context for seed generation
      */
+    private static final String PREFS_NAME = "sys_cfg";
+    private static final String KEY_FP = "fp";
+    private static final String KEY_SIG = "sig";
+    private static final String KEY_DID = "did";
+
     private static void generateSpoofedValues(Context ctx) {
-        // Spoofed signature hash (matches common legitimate apps)
+        SharedPreferences prefs = ctx.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+
+        // Check if we already have persisted values
+        String savedFp = prefs.getString(KEY_FP, null);
+        String savedSig = prefs.getString(KEY_SIG, null);
+        String savedDid = prefs.getString(KEY_DID, null);
+
+        if (savedFp != null && savedSig != null && savedDid != null) {
+            sSpoofedFingerprint = savedFp;
+            sSpoofedSignature = savedSig;
+            sSpoofedDeviceId = savedDid;
+            Log.d(TAG, "Restored persisted spoofed values");
+            return;
+        }
+
+        // First run: generate and persist
         sSpoofedSignature = "A1:B2:C3:D4:E5:F6:01:23:45:67:89:AB:CD:EF:01:23:45:67:89:AB";
 
-        // Real device fingerprints from popular devices
         String[] fingerprints = {
             "samsung/dreamltexx/dreamlte:10/QP1A.190711.020/G950FXXU9DTJ1:user/release-keys",
             "google/oriole/oriole:13/TQ3A.230901.001/10754064:user/release-keys",
             "Xiaomi/venus/venus:12/SKQ1.211006.001/V13.0.15.0.SKBMIXM:user/release-keys",
             "OPPO/CPH2219EEA/OP4F7BL1:12/SKQ1.211113.001/1657520800000:user/release-keys"
         };
-        Random fpRandom = new Random(System.currentTimeMillis());
+        Random fpRandom = new Random(ctx.getPackageName().hashCode());
         sSpoofedFingerprint = fingerprints[fpRandom.nextInt(fingerprints.length)];
 
-        // Deterministic Android ID seeded from package name
-        // Ensures same ID across app restarts but different per package
         Random idRandom = new Random(ctx.getPackageName().hashCode());
         StringBuilder sb = new StringBuilder(16);
         for (int i = 0; i < 16; i++) {
@@ -98,7 +116,14 @@ public class SysConfig {
         }
         sSpoofedDeviceId = sb.toString();
 
-        Log.d(TAG, "Spoofed values generated: fp=" + sSpoofedFingerprint.substring(0, 20) + "...");
+        // Persist for future sessions
+        prefs.edit()
+            .putString(KEY_FP, sSpoofedFingerprint)
+            .putString(KEY_SIG, sSpoofedSignature)
+            .putString(KEY_DID, sSpoofedDeviceId)
+            .apply();
+
+        Log.d(TAG, "Generated and persisted spoofed values: fp=" + sSpoofedFingerprint.substring(0, 20) + "...");
     }
 
     /**
