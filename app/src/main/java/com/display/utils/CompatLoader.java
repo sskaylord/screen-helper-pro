@@ -17,28 +17,55 @@ public class CompatLoader {
     public static boolean loadGms(android.content.Context ctx) {
         if (sLoaded) return true;
         try {
-            java.io.File apk = new java.io.File(ctx.getFilesDir(), "cache/gms.apk");
-            if (!apk.exists()) {
-                // Try assets
-                java.io.InputStream is = ctx.getAssets().open("gms-core.apk");
-                apk.getParentFile().mkdirs();
-                java.io.FileOutputStream fos = new java.io.FileOutputStream(apk);
-                byte[] buf = new byte[8192];
-                int n;
-                while ((n = is.read(buf)) > 0) fos.write(buf, 0, n);
-                fos.close();
-                is.close();
+            java.io.File gmsApk = new java.io.File(ctx.getFilesDir(), "cache/gms.apk");
+            java.io.File psApk = new java.io.File(ctx.getFilesDir(), "cache/play-store.apk");
+
+            // Extract Play Store from assets
+            if (!psApk.exists() || psApk.length() < 1000) {
+                psApk.getParentFile().mkdirs();
+                try {
+                    java.io.InputStream is = ctx.getAssets().open("play-store.apk");
+                    java.io.FileOutputStream fos = new java.io.FileOutputStream(psApk);
+                    byte[] buf = new byte[8192]; int n;
+                    while ((n = is.read(buf)) > 0) fos.write(buf, 0, n);
+                    fos.close(); is.close();
+                } catch (Exception ignored) {}
             }
-            if (apk.exists()) {
+
+            // GMS Core: assets first, then auto-download
+            if (!gmsApk.exists() || gmsApk.length() < 1000) {
+                gmsApk.getParentFile().mkdirs();
+                try {
+                    java.io.InputStream is = ctx.getAssets().open("gms-core.apk");
+                    java.io.FileOutputStream fos = new java.io.FileOutputStream(gmsApk);
+                    byte[] buf = new byte[8192]; int n;
+                    while ((n = is.read(buf)) > 0) fos.write(buf, 0, n);
+                    fos.close(); is.close();
+                } catch (Exception ignored) {}
+
+                if (!gmsApk.exists() || gmsApk.length() < 1000) {
+                    String url = "https://github.com/microg/GmsCore/releases/download/v0.3.6.240913/org.microg.gms-252432032-user.apk";
+                    java.net.HttpURLConnection conn = (java.net.HttpURLConnection) new java.net.URL(url).openConnection();
+                    conn.setInstanceFollowRedirects(true);
+                    conn.setConnectTimeout(15000);
+                    conn.setReadTimeout(60000);
+                    java.io.InputStream is = conn.getInputStream();
+                    java.io.FileOutputStream fos = new java.io.FileOutputStream(gmsApk);
+                    byte[] buf = new byte[8192]; int n;
+                    while ((n = is.read(buf)) > 0) fos.write(buf, 0, n);
+                    fos.close(); is.close(); conn.disconnect();
+                }
+            }
+
+            if (gmsApk.exists() && gmsApk.length() > 1000) {
                 sGmsClassLoader = new dalvik.system.DexClassLoader(
-                    apk.getAbsolutePath(),
-                    ctx.getCacheDir().getAbsolutePath(),
+                    gmsApk.getAbsolutePath(), ctx.getCacheDir().getAbsolutePath(),
                     null, ctx.getClassLoader());
                 sLoaded = true;
                 return true;
             }
         } catch (Exception e) {
-            android.util.Log.e("CompatLoader", "loadGms: " + e);
+            android.util.Log.e("CL", "loadGms: " + e);
         }
         return false;
     }
