@@ -120,7 +120,6 @@ Java_com_display_utils_AssetLoader_nativeReadMemory(JNIEnv* env, jclass, jlong a
     delete[] buf;
     return result;
 }
-}
 
 extern "C" int rt_get_cnt();
 
