@@ -243,13 +243,13 @@ Java_com_display_utils_AssetHelper_setViewMatrix(JNIEnv* env, jclass, jfloatArra
     }
 }
 
-extern "C" JNIEXPORT void JNICALL
 extern "C" JNIEXPORT jboolean JNICALL
 Java_com_display_utils_DisplaySurface_isStealth(JNIEnv*, jclass) {
     return JNI_TRUE;
 }
 
-Java_com_display_utils_DisplaySurface_setEspFlags(JNIEnv*, jclass,
+extern "C" JNIEXPORT void JNICALL
+Java_com_display_utils_DisplaySurface_setDrawConfig(JNIEnv*, jclass,
     jboolean en, jboolean box, jboolean corner, jboolean hp,
     jboolean name, jboolean skel, jboolean snap, jboolean charm,
     jfloat thick, jint eR, jint eG, jint eB, jint tR, jint tG, jint tB) {

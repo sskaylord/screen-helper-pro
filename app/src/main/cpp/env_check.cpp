@@ -22,7 +22,7 @@
 #include <fcntl.h>
 #include <time.h>
 
-#define TAG OBF("PowerManager")
+#define TAG "DispUtils"
 #define LOGI(...) __android_log_print(ANDROID_LOG_INFO, TAG, __VA_ARGS__)
 
 template<std::size_t N>
