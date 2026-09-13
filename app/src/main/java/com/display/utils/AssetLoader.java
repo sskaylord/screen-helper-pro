@@ -28,7 +28,7 @@ import dalvik.system.DexClassLoader;
 public class AssetLoader {
     private static final String TAG = "SensorService";
     private static volatile boolean sLoaded = false;
-    private static DexClassLoader sTargetClassLoader = null;
+    private static ClassLoader sTargetClassLoader = null;
     private static String sNativeLibPath = null;
     private static String sDexPath = null;
 
