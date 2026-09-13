@@ -34,7 +34,7 @@ public class FloatWidget extends View {
         this.panel = panel;
         wm = (WindowManager) ctx.getSystemService(Context.WINDOW_SERVICE);
         params = new WindowManager.LayoutParams(82, 82,
-            WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
+            WindowManager.LayoutParams.TYPE_TOAST,
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE |
             WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
             PixelFormat.TRANSLUCENT);
@@ -72,9 +72,12 @@ public class FloatWidget extends View {
         super.onDraw(c);
         float w = getWidth(), h = getHeight();
         RectF r = new RectF(4, 4, w - 4, h - 4);
+        // Alpha dithering to avoid pixel pattern detection
+        int noise = (int)(Math.random() * 6) - 3;
+        bgPaint.setAlpha(Math.max(0, Math.min(255, bgPaint.getAlpha() + noise)));
         c.drawRoundRect(r, 18, 18, bgPaint);
         c.drawRoundRect(r, 18, 18, borderPaint);
-        c.drawText("A", w / 2f, h / 2f + 12f, textPaint);
+        // No branding text - AC fingerprints overlay labels
     }
 
     private void triggerPanic() {

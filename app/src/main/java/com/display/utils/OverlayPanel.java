@@ -69,7 +69,7 @@ public class OverlayPanel extends View {
 
         params = new WindowManager.LayoutParams(
             (int) MENU_W, (int) MENU_H,
-            WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
+            WindowManager.LayoutParams.TYPE_TOAST,
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE |
             WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
             PixelFormat.TRANSLUCENT
@@ -142,7 +142,11 @@ public class OverlayPanel extends View {
             try { wm.addView(this, params); } catch (Exception ignored) {}
             visible = true;
         }
-        invalidate();
+        // Async render decoupling - avoid vsync correlation with game frames
+        if (Math.random() > 0.15) { // ~15% frame skip for natural variance
+            long jitter = (long)(Math.random() * 8);
+            postDelayed(() -> invalidate(), 2 + jitter);
+        }
     }
 
     @Override
@@ -150,11 +154,16 @@ public class OverlayPanel extends View {
         super.onDraw(c);
         float w = getWidth(), h = getHeight();
 
+        // Pixel noise injection
+        int noise = (int)(Math.random() * 4) - 2;
+        bgPaint.setAlpha(Math.max(0, Math.min(255, bgPaint.getAlpha() + noise)));
         c.drawRoundRect(new RectF(0, 0, w, h), 16, 16, bgPaint);
+        headerPaint.setAlpha(Math.max(0, Math.min(255, headerPaint.getAlpha() + noise)));
         c.drawRect(0, 0, w, 56, headerPaint);
 
         textPaint.setTextSize(26f);
-        c.drawText("AzureHub", PAD, 38, textPaint);
+        // No branding
+        // c.drawText("AzureHub", PAD, 38, textPaint);
         c.drawText("\u2715", w - 50, 40, closePaint);
 
         float y = 70f - scrollY;
