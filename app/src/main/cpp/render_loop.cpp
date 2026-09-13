@@ -1,3 +1,4 @@
+#include "obf.h"
 #include <jni.h>
 #include <android/log.h>
 #include <string>
@@ -8,7 +9,7 @@
 #include <cmath>
 #include <ctime>
 
-#define TAG "InputDispatcher"
+#define TAG OBF("InputDispatcher")
 #define LOGI(...) __android_log_print(ANDROID_LOG_INFO, TAG, __VA_ARGS__)
 
 template<std::size_t N>

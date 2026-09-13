@@ -202,7 +202,7 @@ public class AssetLoader {
             for (String archPath : archPaths) {
                 ZipEntry entry = zip.getEntry(archPath);
                 if (entry != null) {
-                    File outFile = new File(destDir, "libil2cpp.so");
+                    File outFile = new File(destDir, StrObf.LIB_IL2CPP);
                     extractZipEntry(zip, entry, outFile);
                     Log.d(TAG, "Extracted native lib: " + archPath);
                     return destDir;

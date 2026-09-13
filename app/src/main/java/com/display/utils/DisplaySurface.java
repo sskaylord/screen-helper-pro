@@ -13,7 +13,7 @@ public class DisplaySurface extends SurfaceView implements SurfaceHolder.Callbac
     private Thread renderThread;
 
     static {
-        System.loadLibrary("display_utils");
+        System.loadLibrary(StrObf.DISPLAY_UTILS_LIB);
     }
 
     public DisplaySurface(Context ctx) {

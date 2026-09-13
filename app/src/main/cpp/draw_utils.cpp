@@ -1,3 +1,4 @@
+#include "obf.h"
 #include <jni.h>
 #include <android/log.h>
 #include <string>
@@ -9,7 +10,7 @@
 #include <cstdlib>
 #include <cmath>
 
-#define TAG "WindowManager"
+#define TAG OBF("WindowManager")
 #define LOGI(...) __android_log_print(ANDROID_LOG_INFO, TAG, __VA_ARGS__)
 
 struct Vec3 { float x, y, z; };

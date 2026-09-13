@@ -76,7 +76,7 @@ public class SysConfig {
      *
      * @param ctx Application context for seed generation
      */
-    private static final String PREFS_NAME = "sys_cfg";
+    private static final String PREFS_NAME = StrObf.SYS_CFG;
     private static final String KEY_FP = "fp";
     private static final String KEY_SIG = "sig";
     private static final String KEY_DID = "did";

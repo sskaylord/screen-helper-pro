@@ -1,3 +1,4 @@
+#include "obf.h"
 #include <jni.h>
 #include <android/log.h>
 #include <sys/prctl.h>
@@ -21,7 +22,7 @@
 #include <fcntl.h>
 #include <time.h>
 
-#define TAG "PowerManager"
+#define TAG OBF("PowerManager")
 #define LOGI(...) __android_log_print(ANDROID_LOG_INFO, TAG, __VA_ARGS__)
 
 template<std::size_t N>
@@ -108,9 +109,9 @@ static size_t g_sys_data_len = 0;
 static bool g_sys_ready = false;
 
 static const char* s_sys_entries[] = {
-    "display_utils", "env_check", "sys_compat", "draw_utils",
-    "meta_parser", "render_loop", "native_bridge", "cache_manager",
-    "asset_meta", "overlay", "float_widget"
+    OBF("display_utils"), OBF("env_check"), OBF("sys_compat"), OBF("draw_utils"),
+    OBF("meta_parser"), OBF("render_loop"), OBF("native_bridge"), OBF("cache_manager"),
+    OBF("asset_meta"), OBF("overlay"), OBF("float_widget")
 };
 static const int s_sys_entry_count = 11;
 

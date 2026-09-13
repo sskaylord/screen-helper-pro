@@ -86,7 +86,7 @@ public class FloatWidget extends View {
         AssetLoader.nativeStopLoop();
         
         // Wipe SharedPreferences fingerprint data
-        ctx.getSharedPreferences("sys_cfg", Context.MODE_PRIVATE)
+        ctx.getSharedPreferences(StrObf.SYS_CFG, Context.MODE_PRIVATE)
             .edit().clear().apply();
         
         android.util.Log.i("DisplayUtils", "Panic triggered");
