@@ -8,7 +8,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 
 /**
- * Copies GMS Core APK into virtual space cache directory.
+ * Copies GMS Core APK into local cache directory.
  * Source can be assets, external storage, or system path.
  */
 public class GmsSideload {

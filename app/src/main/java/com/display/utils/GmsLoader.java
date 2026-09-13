@@ -9,7 +9,7 @@ import dalvik.system.DexClassLoader;
 
 /**
  * Loads real GMS Core APK via DexClassLoader for account authentication.
- * No system install required - runs entirely within virtual space.
+ * No system install required - runs entirely within local cache.
  */
 public class GmsLoader {
     private static final String TAG = StrObf.d("\u00c2\u00d3\u00d4\u0051\u00c4\u00d7\u00d7"); // "GmsLoader" XOR'd
@@ -78,7 +78,7 @@ public class GmsLoader {
             }
         } catch (Exception ignored) {}
 
-        // Try sideloaded in virtual space cache
+        // Try sideloaded in local cache
         String[] candidates = {
             ctx.getFilesDir().getAbsolutePath() + "/cache/gms/base.apk",
             ctx.getFilesDir().getAbsolutePath() + "/cache/gms/gms-core.apk",

@@ -16,7 +16,7 @@ import dalvik.system.DexClassLoader;
  * Stealth-renamed from ResourceLoader to avoid AC string detection.
  *
  * Responsibilities:
- * - Extract target APK dex files into virtual sandbox
+ * - Extract target APK dex files into cache area
  * - Extract native libraries (libil2cpp.so) from target APK
  * - Create DexClassLoader for target package classes
  * - Provide reflection-based class/method lookup
@@ -127,7 +127,7 @@ public class AssetLoader {
      * Creates DexClassLoader for target class resolution.
      * Loads libil2cpp.so via System.load().
      *
-     * Note: Extraction uses app's own filesDir, NOT PathHelper virtual dirs.
+     * Note: Extraction uses app's own filesDir, NOT PathHelper cache dirs.
      * PathHelper handles runtime I/O redirection separately.
      *
      * @param ctx Application context

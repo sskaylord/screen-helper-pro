@@ -78,7 +78,7 @@ public class HomeFragment extends Fragment {
         header.addView(gear);
 
         TextView sub = new TextView(getActivity());
-        sub.setText("Virtual App");
+        sub.setText("App Manager");
         sub.setTextColor(TEXT_DIM);
         sub.setTextSize(14);
 
@@ -141,7 +141,7 @@ public class HomeFragment extends Fragment {
         texts.addView(t1);
 
         TextView t2 = new TextView(getActivity());
-        t2.setText("Your virtual space. Clone, Spoof, Play.");
+        t2.setText("Uygulama yöneticisi. Klonla, Oyna.");
         t2.setTextColor(TEXT_DIM);
         t2.setTextSize(13);
         texts.addView(t2);

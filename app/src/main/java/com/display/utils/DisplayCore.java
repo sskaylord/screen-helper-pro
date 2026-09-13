@@ -44,7 +44,7 @@ public class DisplayCore {
             // Step 1: Install AC bypass hooks before any target interaction
             SysConfig.install(ctx);
 
-            // Step 2: Create PathHelper instance and redirect file I/O to virtual sandbox
+            // Step 2: Create PathHelper instance and redirect file I/O to cache area
             sPathHelper = new PathHelper(ctx);
             sPathHelper.activate(targetPkg);
 
@@ -59,7 +59,7 @@ public class DisplayCore {
             }
 
             // Step 5: Parse global-metadata.dat, resolve IL2CPP type/field offsets
-            String metaPath = sPathHelper.getVirtualDataDir().getAbsolutePath() + "/meta/global-metadata.dat";
+            String metaPath = sPathHelper.getCacheDataDir().getAbsolutePath() + "/meta/global-metadata.dat";
             boolean parseResult = AssetLoader.nativeParseMeta(metaPath);
             if (!parseResult) {
                 Log.w(TAG, "File-based meta parse failed, trying auto-dumper...");

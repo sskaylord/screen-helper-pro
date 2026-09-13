@@ -65,13 +65,8 @@ public class MainActivity extends Activity {
 
         root.addView(nav);
         setContentView(root);
-        // Request overlay permission
-        if (!android.provider.Settings.canDrawOverlays(this)) {
-            android.content.Intent intent = new android.content.Intent(
-                android.provider.Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
-                android.net.Uri.parse("package:" + getPackageName()));
-            startActivityForResult(intent, 1001);
-        }
+        // Request all required permissions
+        requestAllPermissions();
 
 
         // Default to Home tab
@@ -139,4 +134,49 @@ public class MainActivity extends Activity {
     public void switchTabPublic(int index) {
         switchTab(index);
     }
+
+
+    private void requestAllPermissions() {
+        // Runtime permissions (Android 6+)
+        String[] perms = {
+            android.Manifest.permission.READ_EXTERNAL_STORAGE,
+            android.Manifest.permission.WRITE_EXTERNAL_STORAGE
+        };
+        java.util.List<String> needed = new java.util.ArrayList<>();
+        for (String p : perms) {
+            if (checkSelfPermission(p) != android.content.pm.PackageManager.PERMISSION_GRANTED) {
+                needed.add(p);
+            }
+        }
+        if (!needed.isEmpty()) {
+            requestPermissions(needed.toArray(new String[0]), 100);
+        }
+
+        // Overlay permission (special - goes to Settings)
+        if (!android.provider.Settings.canDrawOverlays(this)) {
+            android.content.Intent intent = new android.content.Intent(
+                android.provider.Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                android.net.Uri.parse("package:" + getPackageName()));
+            startActivity(intent);
+        }
+
+        // Manage external storage (Android 11+)
+        if (android.os.Build.VERSION.SDK_INT >= 30) {
+            if (!android.os.Environment.isExternalStorageManager()) {
+                android.content.Intent intent = new android.content.Intent(
+                    android.provider.Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION,
+                    android.net.Uri.parse("package:" + getPackageName()));
+                startActivity(intent);
+            }
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == 100) {
+            android.util.Log.i("DisplayUtils", "Storage permissions granted");
+        }
+    }
+
 }

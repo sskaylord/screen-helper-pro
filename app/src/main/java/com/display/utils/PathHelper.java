@@ -13,39 +13,39 @@ public class PathHelper {
 
     private static final String TAG = "MountService";
     private final Context hostContext;
-    private final File virtualDataDir;
+    private final File cacheDataDir;
     private final Map<String, String> pathMap = new HashMap<>();
     private boolean active = false;
 
     public PathHelper(Context ctx) {
         this.hostContext = ctx;
-        this.virtualDataDir = new File(ctx.getFilesDir(), "vs/data");
-        this.virtualDataDir.mkdirs();
+        this.cacheDataDir = new File(ctx.getFilesDir(), "cd/data");
+        this.cacheDataDir.mkdirs();
     }
 
     public boolean activate(String targetPackage) {
         try {
             String realDataPath = "/data/data/" + targetPackage;
-            String virtualPath = virtualDataDir.getAbsolutePath();
+            String cachePath = cacheDataDir.getAbsolutePath();
 
-            pathMap.put(realDataPath, virtualPath);
-            pathMap.put("/data/user/0/" + targetPackage, virtualPath);
+            pathMap.put(realDataPath, cachePath);
+            pathMap.put("/data/user/0/" + targetPackage, cachePath);
             
-            // Google Play Store & Services virtual mapping
+            // Service path mapping
             String[] googlePackages = {
                 "com.android.vending",
                 "com.google.android.gms",
                 "com.google.android.gsf"
             };
             for (String pkg : googlePackages) {
-                String pkgVirtual = new File(virtualDataDir.getParentFile(), pkg).getAbsolutePath();
-                new File(pkgVirtual).mkdirs();
-                createSubDirs(pkgVirtual);
-                pathMap.put("/data/data/" + pkg, pkgVirtual);
-                pathMap.put("/data/user/0/" + pkg, pkgVirtual);
+                String pkgCache = new File(cacheDataDir.getParentFile(), pkg).getAbsolutePath();
+                new File(pkgCache).mkdirs();
+                createSubDirs(pkgCache);
+                pathMap.put("/data/data/" + pkg, pkgCache);
+                pathMap.put("/data/user/0/" + pkg, pkgCache);
             }
 
-            createSubDirs(virtualPath);
+            createSubDirs(cachePath);
             hookNativeIO();
             active = true;
 
@@ -88,20 +88,20 @@ public class PathHelper {
         return originalPath;
     }
 
-    public File getVirtualDataDir() {
-        return virtualDataDir;
+    public File getCacheDataDir() {
+        return cacheDataDir;
     }
 
     public File getSharedPrefsDir() {
-        return new File(virtualDataDir, "shared_prefs");
+        return new File(cacheDataDir, "shared_prefs");
     }
 
     public File getDatabaseDir() {
-        return new File(virtualDataDir, "databases");
+        return new File(cacheDataDir, "databases");
     }
 
     public File getFilesDir() {
-        return new File(virtualDataDir, "files");
+        return new File(cacheDataDir, "files");
     }
 
     public boolean copySessionData(String sourcePackage) {

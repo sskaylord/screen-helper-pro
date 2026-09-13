@@ -16,7 +16,7 @@ import android.widget.TextView;
 
 /**
  * Account profiles management fragment.
- * Launches ProfileManager activity for virtual app cloning.
+ * Launches ProfileManager activity for app cloning.
  * Stealth-named to appear as multi-account manager.
  */
 public class ProfilesFragment extends Fragment {

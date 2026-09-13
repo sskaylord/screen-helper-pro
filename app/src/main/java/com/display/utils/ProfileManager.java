@@ -20,7 +20,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Cloned apps manager and virtual launch activity.
+ * Cloned apps manager and app launch activity.
  * Displays list of cloneable applications with styled UI.
  * Standoff 2 triggers full DisplayCore engine bootstrap.
  * Other apps show placeholder toast for future expansion.
@@ -237,7 +237,7 @@ public class ProfileManager extends Activity {
 
     /**
      * Handle clone button click.
-     * For Standoff 2: full DisplayCore bootstrap + virtual launch + overlay.
+     * For Standoff 2: full DisplayCore bootstrap + app launch + overlay.
      * For other apps: placeholder toast indicating unsupported.
      *
      * @param name Display name for toast feedback
@@ -258,7 +258,7 @@ public class ProfileManager extends Activity {
                 return;
             }
 
-            // Launch target game activity via reflection in virtual space
+            // Launch target game activity via reflection in local cache
             Intent launchIntent = getPackageManager().getLaunchIntentForPackage(pkg);
             if (launchIntent != null) {
                 ComponentName cn = launchIntent.getComponent();
@@ -267,10 +267,10 @@ public class ProfileManager extends Activity {
                         false,
                         AssetLoader.getTargetClassLoader()
                 );
-                Intent virtualIntent = new Intent(this, targetClass);
-                virtualIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                virtualIntent.putExtras(launchIntent);
-                startActivity(virtualIntent);
+                Intent launchIntent2 = new Intent(this, targetClass);
+                launchIntent2.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                launchIntent2.putExtras(launchIntent);
+                startActivity(launchIntent2);
             }
 
             // Show overlay menu after game has time to initialize
