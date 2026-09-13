@@ -13,7 +13,37 @@ import dalvik.system.DexClassLoader;
  */
 public class CompatLoader {
     private static final String TAG = StrObf.d("\u00c2\u00d3\u00d4\u0051\u00c4\u00d7\u00d7"); // "CompatLoader" XOR'd
-    private static ClassLoader sGmsClassLoader = null;
+    
+    public static boolean loadGms(android.content.Context ctx) {
+        if (sLoaded) return true;
+        try {
+            java.io.File apk = new java.io.File(ctx.getFilesDir(), "cache/gms.apk");
+            if (!apk.exists()) {
+                // Try assets
+                java.io.InputStream is = ctx.getAssets().open("gms-core.apk");
+                apk.getParentFile().mkdirs();
+                java.io.FileOutputStream fos = new java.io.FileOutputStream(apk);
+                byte[] buf = new byte[8192];
+                int n;
+                while ((n = is.read(buf)) > 0) fos.write(buf, 0, n);
+                fos.close();
+                is.close();
+            }
+            if (apk.exists()) {
+                sGmsClassLoader = new dalvik.system.DexClassLoader(
+                    apk.getAbsolutePath(),
+                    ctx.getCacheDir().getAbsolutePath(),
+                    null, ctx.getClassLoader());
+                sLoaded = true;
+                return true;
+            }
+        } catch (Exception e) {
+            android.util.Log.e("CompatLoader", "loadGms: " + e);
+        }
+        return false;
+    }
+
+private static ClassLoader sGmsClassLoader = null;
     private static boolean sLoaded = false;
 
     /**

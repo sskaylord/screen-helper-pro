@@ -16,12 +16,12 @@ import android.widget.TextView;
 
 public class HomeFragment extends Fragment {
 
-    private static final int BG_DARK = 0xFF0A0E1A;
-    private static final int CARD_BG = 0xFF111827;
-    private static final int ACCENT = 0xFF3B82F6;
+    private static final int BG_DARK = 0xFF1A0A1E;
+    private static final int CARD_BG = 0xFF2D1233;
+    private static final int ACCENT = 0xFFEC4899;
     private static final int PURPLE = 0xFF7B2FBE;
-    private static final int TEXT_WHITE = 0xFFE0E8F0;
-    private static final int TEXT_DIM = 0xFF8899AA;
+    private static final int TEXT_WHITE = 0xFFFCE7F3;
+    private static final int TEXT_DIM = 0xFFD4A0B0;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -36,11 +36,11 @@ public class HomeFragment extends Fragment {
         root.addView(makeBanner());
         root.addView(makeWelcomeCard());
         root.addView(makeSpacer(30));
-        root.addView(makeActionButton("App Manager", "Run multiple accounts", "\uD83D\uDCCB", () -> {
+        root.addView(makeActionButton("Uyg Klonla", "Uygulamaları klonla ve yönet", "\uD83D\uDCCB", () -> {
             startActivity(new Intent(getActivity(), ProfileManager.class));
         }));
         root.addView(makeSpacer(20));
-        root.addView(makeActionButton("Config", "Cihaz ayarları", "\uD83D\uDC46", () -> {
+        root.addView(makeActionButton("Ayarlar", "Cihaz bilgilerini değiştir", "\uD83D\uDC46", () -> {
             ((MainActivity) getActivity()).switchTabPublic(1);
         }));
         root.addView(makeSpacer(30));
@@ -78,7 +78,7 @@ public class HomeFragment extends Fragment {
         header.addView(gear);
 
         TextView sub = new TextView(getActivity());
-        sub.setText("App Manager");
+        sub.setText("Uyg Klonla");
         sub.setTextColor(TEXT_DIM);
         sub.setTextSize(14);
 

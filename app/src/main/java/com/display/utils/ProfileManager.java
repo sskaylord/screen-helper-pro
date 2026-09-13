@@ -1,10 +1,7 @@
 package com.display.utils;
 
 import android.app.Activity;
-import android.content.ComponentName;
 import android.content.Intent;
-import android.content.pm.ApplicationInfo;
-import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
@@ -15,311 +12,97 @@ import android.os.Looper;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
-import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
-
 import java.io.FileWriter;
-import java.util.ArrayList;
-import java.util.List;
 
 public class ProfileManager extends Activity {
     private static final String TAG = "PM";
-    private static final int BG_DARK = 0xFF0A0E1A;
-    private static final int CARD_BG = 0xFF111827;
-    private static final int ACCENT = 0xFF3B82F6;
+    private static final int BG = 0xFF1A0A1E;
+    private static final int CARD = 0xFF2D1233;
     private static final int PINK = 0xFFEC4899;
-    private static final int TEXT_WHITE = 0xFFE0E8F0;
-    private static final int TEXT_DIM = 0xFF8899AA;
+    private static final int TW = 0xFFFCE7F3;
+    private static final int TD = 0xFFD4A0B0;
 
-    private LinearLayout appList;
-
-    private void log(String msg) {
-        Log.e(TAG, msg);
-        try {
-            FileWriter fw = new FileWriter(
-                Environment.getExternalStorageDirectory() + "/Download/crash_display.log", true);
-            fw.write(System.currentTimeMillis() + " " + msg + "\n");
-            fw.close();
-        } catch (Exception ignored) {}
+    private void log(String m) {
+        Log.e(TAG, m);
+        try { FileWriter fw = new FileWriter(Environment.getExternalStorageDirectory() + "/Download/crash_display.log", true); fw.write(System.currentTimeMillis() + " " + m + "\n"); fw.close(); } catch (Exception ignored) {}
     }
 
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    @Override protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        log("onCreate start");
+        log("onCreate");
         try {
-            getWindow().setStatusBarColor(BG_DARK);
-            getWindow().setNavigationBarColor(BG_DARK);
-
-            LinearLayout root = new LinearLayout(this);
-            root.setOrientation(LinearLayout.VERTICAL);
-            root.setBackgroundColor(BG_DARK);
-            root.addView(makeTopBar());
-
-            ScrollView scroll = new ScrollView(this);
-            scroll.setLayoutParams(new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT, 0, 1f));
-
-            LinearLayout content = new LinearLayout(this);
-            content.setOrientation(LinearLayout.VERTICAL);
-            content.setPadding(40, 20, 40, 40);
-
-            content.addView(makeHeader());
-            content.addView(makeSpacer(20));
-
-            appList = new LinearLayout(this);
-            appList.setOrientation(LinearLayout.VERTICAL);
-
-            addApp("Play Store", "com.android.vending", true);
-            addApp("Google", "com.google.android.googlequicksearchbox", true);
-            addApp("Standoff 2", "com.axlebolt.standoff2", true);
-            addApp("WhatsApp", "com.whatsapp", false);
-            addApp("Instagram", "com.instagram.android", false);
-            addApp("TikTok", "com.zhiliaoapp.musically", false);
-            addApp("Telegram", "org.telegram.messenger", false);
-            addApp("Discord", "com.discord", false);
-
-            content.addView(appList);
-            scroll.addView(content);
-            root.addView(scroll);
-            setContentView(root);
+            getWindow().setStatusBarColor(BG); getWindow().setNavigationBarColor(BG);
+            LinearLayout root = new LinearLayout(this); root.setOrientation(LinearLayout.VERTICAL); root.setBackgroundColor(BG);
+            LinearLayout top = new LinearLayout(this); top.setOrientation(LinearLayout.HORIZONTAL); top.setGravity(Gravity.CENTER_VERTICAL); top.setPadding(20,16,20,16); top.setBackgroundColor(BG);
+            TextView back = new TextView(this); back.setText("\u2190"); back.setTextColor(TW); back.setTextSize(24); back.setPadding(10,0,20,0); back.setOnClickListener(v -> finish()); top.addView(back);
+            TextView title = new TextView(this); title.setText("Uyg Klonla"); title.setTextColor(TW); title.setTextSize(20); title.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.BOLD)); top.addView(title);
+            root.addView(top);
+            LinearLayout tabs = new LinearLayout(this); tabs.setOrientation(LinearLayout.HORIZONTAL); tabs.setPadding(20,10,20,10);
+            String[] cats = {"T\u00fcm Uygular","Oyunlar","Sosyal","Di\u011fer"};
+            for (int i = 0; i < cats.length; i++) { TextView tab = new TextView(this); tab.setText(cats[i]); tab.setTextColor(i==0?Color.WHITE:TD); tab.setTextSize(13); tab.setPadding(20,8,20,8); GradientDrawable tb = new GradientDrawable(); tb.setColor(i==0?PINK:CARD); tb.setCornerRadius(16); tab.setBackground(tb); LinearLayout.LayoutParams tlp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT); tlp.rightMargin=12; tab.setLayoutParams(tlp); tabs.addView(tab); }
+            root.addView(tabs);
+            ScrollView scroll = new ScrollView(this); scroll.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 0, 1f));
+            LinearLayout list = new LinearLayout(this); list.setOrientation(LinearLayout.VERTICAL); list.setPadding(20,10,20,20);
+            addApp(list,"Play Store","com.android.vending","Google Play Store",true);
+            addApp(list,"Google Chrome","com.google.android.googlequicksearchbox","Web Taray\u0131c\u0131",true);
+            addApp(list,"WhatsApp","com.whatsapp","Sosyal",false);
+            addApp(list,"Instagram","com.instagram.android","Sosyal",false);
+            addApp(list,"TikTok","com.zhiliaoapp.musically","Sosyal",false);
+            addApp(list,"PUBG MOBILE","com.tencent.ig","Oyun",true);
+            addApp(list,"Standoff 2","com.axlebolt.standoff2","Oyun",true);
+            addApp(list,"Valorant Mobile","com.riotgames.valorant","Oyun",true);
+            addApp(list,"Telegram","org.telegram.messenger","Sosyal",false);
+            addApp(list,"Facebook","com.facebook.katana","Sosyal",false);
+            scroll.addView(list); root.addView(scroll); setContentView(root);
             log("onCreate done");
-        } catch (Exception e) {
-            log("onCreate CRASH: " + e.toString());
-            Toast.makeText(this, "Hata: " + e.getMessage(), Toast.LENGTH_LONG).show();
-            finish();
-        }
+        } catch (Exception e) { log("CRASH: "+e); Toast.makeText(this,"Hata: "+e.getMessage(),Toast.LENGTH_LONG).show(); finish(); }
     }
 
-    private View makeTopBar() {
-        LinearLayout bar = new LinearLayout(this);
-        bar.setOrientation(LinearLayout.HORIZONTAL);
-        bar.setGravity(Gravity.CENTER_VERTICAL);
-        bar.setPadding(20, 16, 20, 16);
-        bar.setBackgroundColor(BG_DARK);
-
-        TextView back = new TextView(this);
-        back.setText("\u2190");
-        back.setTextColor(TEXT_WHITE);
-        back.setTextSize(24);
-        back.setPadding(10, 0, 20, 0);
-        back.setOnClickListener(v -> finish());
-        bar.addView(back);
-
-        TextView title = new TextView(this);
-        title.setText("Uygulama Yöneticisi");
-        title.setTextColor(TEXT_WHITE);
-        title.setTextSize(20);
-        title.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.BOLD));
-        bar.addView(title);
-        return bar;
+    private void addApp(LinearLayout p, String name, String pkg, String cat, boolean pri) {
+        LinearLayout row = new LinearLayout(this); row.setOrientation(LinearLayout.HORIZONTAL); row.setGravity(Gravity.CENTER_VERTICAL); row.setPadding(20,16,20,16);
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT); lp.bottomMargin=10; row.setLayoutParams(lp);
+        GradientDrawable bg = new GradientDrawable(); bg.setColor(CARD); bg.setCornerRadius(14); row.setBackground(bg);
+        TextView icon = new TextView(this); icon.setText("\uD83D\uDCE6"); icon.setTextSize(26); icon.setPadding(0,0,16,0); row.addView(icon);
+        LinearLayout texts = new LinearLayout(this); texts.setOrientation(LinearLayout.VERTICAL); texts.setLayoutParams(new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
+        TextView t1 = new TextView(this); t1.setText(name); t1.setTextColor(TW); t1.setTextSize(15); t1.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.BOLD)); texts.addView(t1);
+        TextView t2 = new TextView(this); t2.setText(cat); t2.setTextColor(TD); t2.setTextSize(12); texts.addView(t2); row.addView(texts);
+        TextView btn = new TextView(this); btn.setText("Klonla"); btn.setTextColor(Color.WHITE); btn.setTextSize(13); btn.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.BOLD)); btn.setPadding(24,10,24,10); btn.setGravity(Gravity.CENTER);
+        GradientDrawable bb = new GradientDrawable(); bb.setColor(PINK); bb.setCornerRadius(18); btn.setBackground(bb);
+        btn.setOnClickListener(v -> onAction(name, pkg)); row.addView(btn); p.addView(row);
     }
 
-    private View makeHeader() {
-        LinearLayout card = new LinearLayout(this);
-        card.setOrientation(LinearLayout.HORIZONTAL);
-        card.setGravity(Gravity.CENTER_VERTICAL);
-        card.setPadding(30, 24, 30, 24);
-
-        GradientDrawable bg = new GradientDrawable();
-        bg.setColor(CARD_BG);
-        bg.setCornerRadius(16);
-        card.setBackground(bg);
-
-        TextView icon = new TextView(this);
-        icon.setText("\uD83D\uDCCB");
-        icon.setTextSize(28);
-        icon.setPadding(0, 0, 20, 0);
-        card.addView(icon);
-
-        LinearLayout texts = new LinearLayout(this);
-        texts.setOrientation(LinearLayout.VERTICAL);
-
-        TextView t1 = new TextView(this);
-        t1.setText("Uygulamalarınızı yönetin");
-        t1.setTextColor(TEXT_WHITE);
-        t1.setTextSize(16);
-        t1.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.BOLD));
-        texts.addView(t1);
-
-        TextView t2 = new TextView(this);
-        t2.setText("Hızlı erişim ve hesap yönetimi.");
-        t2.setTextColor(TEXT_DIM);
-        t2.setTextSize(13);
-        texts.addView(t2);
-
-        card.addView(texts);
-        return card;
+    private void onAction(String name, String pkg) {
+        log("onAction: "+name+" / "+pkg);
+        Toast.makeText(this, name+" ba\u015flat\u0131l\u0131yor...", Toast.LENGTH_SHORT).show();
+        new Thread(() -> { try {
+            if (pkg.equals("com.axlebolt.standoff2")) launchGame(pkg); else launchApp(pkg);
+        } catch (Exception e) { log("ERROR: "+e); runOnUiThread(() -> Toast.makeText(this,"Hata: "+e.getMessage(),Toast.LENGTH_LONG).show()); } }).start();
     }
 
-    private void addApp(String name, String pkg, boolean isPrimary) {
-        LinearLayout row = new LinearLayout(this);
-        row.setOrientation(LinearLayout.HORIZONTAL);
-        row.setGravity(Gravity.CENTER_VERTICAL);
-        row.setPadding(20, 20, 20, 20);
-
-        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
-            LinearLayout.LayoutParams.MATCH_PARENT,
-            LinearLayout.LayoutParams.WRAP_CONTENT);
-        lp.bottomMargin = 12;
-        row.setLayoutParams(lp);
-
-        GradientDrawable bg = new GradientDrawable();
-        bg.setColor(CARD_BG);
-        bg.setCornerRadius(12);
-        row.setBackground(bg);
-
-        TextView icon = new TextView(this);
-        icon.setText("\uD83D\uDCE6");
-        icon.setTextSize(28);
-        icon.setPadding(0, 0, 20, 0);
-        row.addView(icon);
-
-        LinearLayout texts = new LinearLayout(this);
-        texts.setOrientation(LinearLayout.VERTICAL);
-        texts.setLayoutParams(new LinearLayout.LayoutParams(0,
-            LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
-
-        TextView t1 = new TextView(this);
-        t1.setText(name);
-        t1.setTextColor(TEXT_WHITE);
-        t1.setTextSize(16);
-        t1.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.BOLD));
-        texts.addView(t1);
-
-        TextView t2 = new TextView(this);
-        t2.setText(pkg);
-        t2.setTextColor(TEXT_DIM);
-        t2.setTextSize(12);
-        texts.addView(t2);
-
-        row.addView(texts);
-
-        TextView actionBtn = new TextView(this);
-        actionBtn.setText("Aç");
-        actionBtn.setTextColor(Color.WHITE);
-        actionBtn.setTextSize(14);
-        actionBtn.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.BOLD));
-        actionBtn.setPadding(30, 12, 30, 12);
-        actionBtn.setGravity(Gravity.CENTER);
-
-        GradientDrawable btnBg = new GradientDrawable();
-        btnBg.setColor(isPrimary ? ACCENT : PINK);
-        btnBg.setCornerRadius(20);
-        actionBtn.setBackground(btnBg);
-        actionBtn.setOnClickListener(v -> onAppAction(name, pkg));
-        row.addView(actionBtn);
-
-        appList.addView(row);
-    }
-
-    private void onAppAction(String name, String pkg) {
-        log("onAppAction: " + name + " / " + pkg);
-        Toast.makeText(this, "Yükleniyor " + name + "...", Toast.LENGTH_SHORT).show();
-
-        new Thread(() -> {
-            try {
-                if (pkg.equals("com.android.vending") ||
-                    pkg.equals("com.google.android.googlequicksearchbox")) {
-                    openServiceApp(pkg);
-                } else if (pkg.equals("com.axlebolt.standoff2")) {
-                    openTargetApp();
-                } else {
-                    runOnUiThread(() ->
-                        Toast.makeText(this, name + " henüz desteklenmiyor", Toast.LENGTH_SHORT).show());
-                }
-            } catch (Exception e) {
-                log("onAppAction ERROR: " + e.toString());
-                runOnUiThread(() ->
-                    Toast.makeText(this, "Hata: " + e.getMessage(), Toast.LENGTH_LONG).show());
-            }
-        }).start();
-    }
-
-    private void openServiceApp(String pkg) throws Exception {
-        log("openServiceApp: " + pkg);
-
-        CompatLoader loader = new CompatLoader(this);
-        boolean ready = loader.init();
-        log("CompatLoader.init = " + ready);
-
-        PathHelper ph = new PathHelper(this);
-        ph.activate(pkg);
-
+    private void launchApp(String pkg) throws Exception {
+        log("launchApp: "+pkg);
+        CompatLoader.loadGms(this);
+        PathHelper ph = new PathHelper(this); ph.activate(pkg);
         AssetLoader.loadTarget(this, pkg);
-
-        Intent launchIntent = getPackageManager().getLaunchIntentForPackage(pkg);
-        if (launchIntent == null) {
-            runOnUiThread(() ->
-                Toast.makeText(this, pkg + " yüklü değil", Toast.LENGTH_SHORT).show());
-            return;
-        }
-
-        runOnUiThread(() -> {
-            try {
-                launchIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                startActivity(launchIntent);
-                Toast.makeText(this, "Açıldı", Toast.LENGTH_SHORT).show();
-            } catch (Exception e) {
-                log("openServiceApp launch error: " + e.toString());
-                Toast.makeText(this, "Açılamadı: " + e.getMessage(), Toast.LENGTH_LONG).show();
-            }
-        });
+        Intent intent = getPackageManager().getLaunchIntentForPackage(pkg);
+        if (intent == null) { runOnUiThread(() -> Toast.makeText(this,pkg+" y\u00fckl\u00fc de\u011fil",Toast.LENGTH_SHORT).show()); return; }
+        runOnUiThread(() -> { intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK); startActivity(intent); });
     }
 
-    private void openTargetApp() throws Exception {
-        String pkg = "com.axlebolt.standoff2";
-        log("openTargetApp start");
-
-        CompatLoader loader = new CompatLoader(this);
-        boolean gmsReady = loader.init();
-        log("CompatLoader.init = " + gmsReady);
-
-        boolean initOk = DisplayCore.initialize(this, pkg);
-        log("DisplayCore.initialize = " + initOk);
-
-        if (!initOk) {
-            runOnUiThread(() ->
-                Toast.makeText(this, "Başlatma hatası", Toast.LENGTH_LONG).show());
-            return;
-        }
-
-        Intent launchIntent = getPackageManager().getLaunchIntentForPackage(pkg);
-        if (launchIntent == null) {
-            runOnUiThread(() ->
-                Toast.makeText(this, "Standoff 2 yüklü değil", Toast.LENGTH_SHORT).show());
-            DisplayCore.cleanup();
-            return;
-        }
-
-        runOnUiThread(() -> {
-            try {
-                launchIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                startActivity(launchIntent);
-
-                new Handler(Looper.getMainLooper()).postDelayed(() -> {
-                    try {
-                        DisplayPanel panel = DisplayCore.getOverlayPanel();
-                        if (panel != null) panel.show();
-                    } catch (Exception ignored) {}
-                }, 2000);
-
-                Toast.makeText(this, "Standoff 2 açıldı", Toast.LENGTH_SHORT).show();
-            } catch (Exception e) {
-                log("openTargetApp launch error: " + e.toString());
-                Toast.makeText(this, "Hata: " + e.getMessage(), Toast.LENGTH_LONG).show();
-                DisplayCore.cleanup();
-            }
+    private void launchGame(String pkg) throws Exception {
+        log("launchGame: "+pkg);
+        CompatLoader.loadGms(this);
+        boolean ok = DisplayCore.initialize(this, pkg);
+        log("DisplayCore.init="+ok);
+        if (!ok) { runOnUiThread(() -> Toast.makeText(this,"Motor ba\u015flat\u0131lamad\u0131",Toast.LENGTH_LONG).show()); return; }
+        Intent intent = getPackageManager().getLaunchIntentForPackage(pkg);
+        if (intent == null) { runOnUiThread(() -> Toast.makeText(this,"Standoff 2 y\u00fckl\u00fc de\u011fil",Toast.LENGTH_SHORT).show()); DisplayCore.cleanup(); return; }
+        runOnUiThread(() -> { intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK); startActivity(intent);
+            new Handler(Looper.getMainLooper()).postDelayed(() -> { try { OverlayPanel p = DisplayCore.getPanel(); if (p != null) p.show(); } catch (Exception ignored) {} }, 2500);
         });
-    }
-
-    private View makeSpacer(int h) {
-        View v = new View(this);
-        v.setLayoutParams(new LinearLayout.LayoutParams(
-            LinearLayout.LayoutParams.MATCH_PARENT, h));
-        return v;
     }
 }

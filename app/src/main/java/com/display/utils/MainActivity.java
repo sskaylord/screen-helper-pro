@@ -23,10 +23,10 @@ public class MainActivity extends Activity {
     private TextView tabHome, tabProfiles, tabDisplay;
     private int currentTab = 2;
 
-    private static final int BG_DARK = 0xFF0A0E1A;
-    private static final int NAV_BG = 0xFF111827;
-    private static final int ACCENT = 0xFF3B82F6;
-    private static final int TEXT_DIM = 0xFF8899AA;
+    private static final int BG_DARK = 0xFF1A0A1E;
+    private static final int NAV_BG = 0xFF2D1233;
+    private static final int ACCENT = 0xFFEC4899;
+    private static final int TEXT_DIM = 0xFFD4A0B0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
