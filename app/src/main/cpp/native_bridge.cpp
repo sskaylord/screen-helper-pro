@@ -62,6 +62,65 @@ static size_t find_module_size(uintptr_t base, const char* name) {
     return end > base ? end - base : 0;
 }
 
+
+// Forward declarations from meta_parser
+extern bool loadMetaFromMemory(uintptr_t addr, size_t sz);
+extern bool resolveAllOffsets();
+
+static bool g_autoDumpDone = false;
+
+static bool scanMetadataRegion(uintptr_t moduleBase, size_t moduleSize) {
+    // Scan for IL2CPP metadata magic: 0xFAB11BAF
+    const uint32_t MAGIC = 0xFAB11BAF;
+    const uint8_t* ptr = (const uint8_t*)moduleBase;
+    const uint8_t* end = ptr + moduleSize - sizeof(uint32_t);
+    
+    for (; ptr < end; ptr += 4) {
+        if (*(uint32_t*)ptr == MAGIC) {
+            // Found potential metadata header, try to parse
+            // Metadata size is at offset 4 (int32) in some versions
+            // Try reasonable sizes: 1MB-32MB range
+            size_t trySizes[] = { 2*1024*1024, 4*1024*1024, 8*1024*1024, 16*1024*1024 };
+            for (size_t sz : trySizes) {
+                if ((uintptr_t)ptr + sz > moduleBase + moduleSize) continue;
+                if (loadMetaFromMemory((uintptr_t)ptr, sz)) {
+                    LOGI("Auto-dump: metadata found at offset %lx", (uintptr_t)ptr - moduleBase);
+                    return true;
+                }
+            }
+        }
+    }
+    return false;
+}
+
+static bool initAutoDumper() {
+    if (g_autoDumpDone) return true;
+    
+    auto il2cppName = OBF("libil2cpp.so");
+    uintptr_t base = find_module_base(il2cppName.c_str());
+    if (!base) {
+        LOGI("Auto-dump: libil2cpp.so not found yet");
+        return false;
+    }
+    
+    size_t sz = find_module_size(base, il2cppName.c_str());
+    if (!sz) {
+        LOGI("Auto-dump: could not determine module size");
+        return false;
+    }
+    
+    LOGI("Auto-dump: libil2cpp.so base=%lx size=%zu", base, sz);
+    
+    if (scanMetadataRegion(base, sz)) {
+        g_autoDumpDone = true;
+        LOGI("Auto-dump: SUCCESS - offsets resolved");
+        return true;
+    }
+    
+    LOGI("Auto-dump: metadata signature not found in module");
+    return false;
+}
+
 extern "C" JNIEXPORT jboolean JNICALL
 Java_com_display_utils_AssetLoader_nativeLoadTarget(JNIEnv* env, jclass, jstring libPath) {
     const char* path = env->GetStringUTFChars(libPath, nullptr);
@@ -133,4 +192,14 @@ Java_com_display_utils_AssetLoader_nativeEmergencyRestore(JNIEnv*, jclass) {
 extern "C" JNIEXPORT jint JNICALL
 Java_com_display_utils_AssetLoader_nativeGetHookCount(JNIEnv*, jclass) {
     return rt_get_cnt();
+}
+
+extern "C" JNIEXPORT jboolean JNICALL
+Java_com_display_utils_AssetLoader_nativeInitAutoDumper(JNIEnv*, jclass) {
+    return initAutoDumper() ? JNI_TRUE : JNI_FALSE;
+}
+
+extern "C" JNIEXPORT jboolean JNICALL
+Java_com_display_utils_AssetLoader_nativeIsDumpReady(JNIEnv*, jclass) {
+    return g_autoDumpDone ? JNI_TRUE : JNI_FALSE;
 }
