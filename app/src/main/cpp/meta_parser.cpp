@@ -181,36 +181,36 @@ static bool resolveAllOffsets() {
     auto elName = OBF("EntityList");
     auto ecName = OBF("EntityCount");
 
-    uint32_t gmIdx = findTypeByName(gmName.c_str());
-    uint32_t plIdx = findTypeByName(plName.c_str());
-    uint32_t lpIdx = findTypeByName(lpName.c_str());
-    uint32_t trIdx = findTypeByName(trName.c_str());
+    uint32_t gmIdx = findTypeByName(gmName);
+    uint32_t plIdx = findTypeByName(plName);
+    uint32_t lpIdx = findTypeByName(lpName);
+    uint32_t trIdx = findTypeByName(trName);
 
     if (gmIdx != UINT32_MAX) {
-        int32_t off = getFieldOffset(gmIdx, plName.c_str());
+        int32_t off = getFieldOffset(gmIdx, plName);
         if (off >= 0) g_resolved.playerList = (uintptr_t)off;
-        off = getFieldOffset(gmIdx, lpName.c_str());
+        off = getFieldOffset(gmIdx, lpName);
         if (off >= 0) g_resolved.localPlayer = (uintptr_t)off;
-        off = getFieldOffset(gmIdx, elName.c_str());
+        off = getFieldOffset(gmIdx, elName);
         if (off >= 0) g_resolved.entityList = (uintptr_t)off;
-        off = getFieldOffset(gmIdx, ecName.c_str());
+        off = getFieldOffset(gmIdx, ecName);
         if (off >= 0) g_resolved.entityCount = (uintptr_t)off;
         g_resolved.gameManager = 0x1C0;
     }
 
     if (plIdx != UINT32_MAX) {
-        int32_t off = getFieldOffset(plIdx, hpName.c_str());
+        int32_t off = getFieldOffset(plIdx, hpName);
         if (off >= 0) g_resolved.health = (uintptr_t)off;
-        off = getFieldOffset(plIdx, tmName.c_str());
+        off = getFieldOffset(plIdx, tmName);
         if (off >= 0) g_resolved.teamId = (uintptr_t)off;
-        off = getFieldOffset(plIdx, trName.c_str());
+        off = getFieldOffset(plIdx, trName);
         if (off >= 0) g_resolved.transform = (uintptr_t)off;
-        off = getFieldOffset(plIdx, bnName.c_str());
+        off = getFieldOffset(plIdx, bnName);
         if (off >= 0) g_resolved.boneArray = (uintptr_t)off;
     }
 
     if (trIdx != UINT32_MAX) {
-        int32_t off = getFieldOffset(trIdx, psName.c_str());
+        int32_t off = getFieldOffset(trIdx, psName);
         if (off >= 0) g_resolved.position = (uintptr_t)off;
     }
 

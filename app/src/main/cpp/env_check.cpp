@@ -40,12 +40,12 @@ static void blockPtrace() {
     prctl(PR_SET_PTRACER, PR_SET_PTRACER_ANY, 0, 0, 0);
 
     auto selfStatus = OBF("/proc/self/status");
-    FILE* f = fopen(selfStatus.c_str(), "r");
+    FILE* f = fopen(selfStatus, "r");
     if (f) {
         char line[256];
         while (fgets(line, sizeof(line), f)) {
             auto tracerKey = OBF("TracerPid:");
-            if (strstr(line, tracerKey.c_str())) {
+            if (strstr(line, tracerKey)) {
                 int pid = atoi(strchr(line, ':') + 1);
                 if (pid != 0) {
                     g_debuggerDetected = true;
@@ -231,10 +231,10 @@ static void checkXposedArtifacts() {
     auto xposedFile1 = OBF("/system/framework/XposedBridge.jar");
     auto xposedFile2 = OBF("/system/app/Superuser.apk");
 
-    FILE* f = fopen(xposedFile1.c_str(), "r");
+    FILE* f = fopen(xposedFile1, "r");
     if (f) { fclose(f); g_stealth = true; }
 
-    f = fopen(xposedFile2.c_str(), "r");
+    f = fopen(xposedFile2, "r");
     if (f) { fclose(f); g_stealth = true; }
 }
 

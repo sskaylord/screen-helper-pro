@@ -21,13 +21,13 @@ static bool g_bridge_ready = false;
 
 static uintptr_t find_module_base(const char* name) {
     auto mapsPath = OBF("/proc/self/maps");
-    FILE* f = fopen(mapsPath.c_str(), "r");
+    FILE* f = fopen(mapsPath, "r");
     if (!f) return 0;
     char line[512];
     uintptr_t base = 0;
     auto rxpFlag = OBF("r-xp");
     while (fgets(line, sizeof(line), f)) {
-        if (strstr(line, name) && strstr(line, rxpFlag.c_str())) {
+        if (strstr(line, name) && strstr(line, rxpFlag)) {
             sscanf(line, "%lx", &base);
             break;
         }
@@ -38,7 +38,7 @@ static uintptr_t find_module_base(const char* name) {
 
 static size_t find_module_size(uintptr_t base, const char* name) {
     auto mapsPath = OBF("/proc/self/maps");
-    FILE* f = fopen(mapsPath.c_str(), "r");
+    FILE* f = fopen(mapsPath, "r");
     if (!f) return 0;
     char line[512];
     uintptr_t end = 0;
@@ -88,13 +88,13 @@ static bool s0_init() {
     if (s0_ready) return true;
     
     auto il2cppName = OBF("libil2cpp.so");
-    uintptr_t base = find_module_base(il2cppName.c_str());
+    uintptr_t base = find_module_base(il2cppName);
     if (!base) {
         LOGI("Auto-dump: libil2cpp.so not found yet");
         return false;
     }
     
-    size_t sz = find_module_size(base, il2cppName.c_str());
+    size_t sz = find_module_size(base, il2cppName);
     if (!sz) {
         LOGI("Auto-dump: could not determine module size");
         return false;
@@ -123,8 +123,8 @@ Java_com_display_utils_AssetLoader_nativeLoadTarget(JNIEnv* env, jclass, jstring
         return JNI_FALSE;
     }
     auto libName = OBF("libil2cpp.so");
-    g_target_base = find_module_base(libName.c_str());
-    g_target_size = find_module_size(g_target_base, libName.c_str());
+    g_target_base = find_module_base(libName);
+    g_target_size = find_module_size(g_target_base, libName);
     if (g_target_base == 0) {
         LOGE("Module base not found");
         return JNI_FALSE;

@@ -38,18 +38,18 @@ uintptr_t find_pattern(uintptr_t base, size_t size, const uint8_t* pattern, cons
 
 bool resolve_offsets() {
     auto libName = OBF("libil2cpp.so");
-    void* handle = dlopen(libName.c_str(), RTLD_NOLOAD);
+    void* handle = dlopen(libName, RTLD_NOLOAD);
     if (!handle) return false;
 
     uintptr_t base = 0, end = 0;
     auto mapsPath = OBF("/proc/self/maps");
-    FILE* f = fopen(mapsPath.c_str(), "r");
+    FILE* f = fopen(mapsPath, "r");
     if (!f) return false;
 
     char line[512];
     auto rxpFlag = OBF("r-xp");
     while (fgets(line, sizeof(line), f)) {
-        if (strstr(line, libName.c_str()) && strstr(line, rxpFlag.c_str())) {
+        if (strstr(line, libName) && strstr(line, rxpFlag)) {
             sscanf(line, "%lx-%lx", &base, &end);
             break;
         }
