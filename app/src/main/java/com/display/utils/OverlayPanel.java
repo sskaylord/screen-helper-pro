@@ -69,7 +69,9 @@ public class OverlayPanel extends View {
 
         params = new WindowManager.LayoutParams(
             (int) MENU_W, (int) MENU_H,
-            WindowManager.LayoutParams.TYPE_TOAST,
+            (android.os.Build.VERSION.SDK_INT >= 26 
+                    ? WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY 
+                    : WindowManager.LayoutParams.TYPE_TOAST),
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE |
             WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
             PixelFormat.TRANSLUCENT
@@ -152,6 +154,8 @@ public class OverlayPanel extends View {
     @Override
     protected void onDraw(Canvas c) {
         super.onDraw(c);
+        // Batch draw calls into single GPU command block
+        c.save();
         float w = getWidth(), h = getHeight();
 
         // Pixel noise injection
@@ -259,6 +263,7 @@ public class OverlayPanel extends View {
         Paint colorPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         colorPaint.setColor(Color.rgb(r, g, b));
         c.drawRoundRect(new RectF(x, y + 8, x + 36, y + 44), 6, 6, colorPaint);
+        c.restore();
         textPaint.setTextSize(22f);
         c.drawText(label, x + 46, y + 34, textPaint);
         c.drawText("R:" + r + " G:" + g + " B:" + b, x + 160, y + 34, sectionPaint);

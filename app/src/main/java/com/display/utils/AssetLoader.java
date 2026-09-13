@@ -411,11 +411,16 @@ public class AssetLoader {
         java.nio.ByteBuffer[] buffers = new java.nio.ByteBuffer[paths.length];
         for (int i = 0; i < paths.length; i++) {
             java.io.File f = new java.io.File(paths[i]);
-            java.io.RandomAccessFile raf = new java.io.RandomAccessFile(f, "r");
-            java.nio.channels.FileChannel ch = raf.getChannel();
-            buffers[i] = ch.map(java.nio.channels.FileChannel.MapMode.READ_ONLY, 0, f.length());
-            ch.close();
-            raf.close();
+            java.io.RandomAccessFile raf = null;
+            java.nio.channels.FileChannel ch = null;
+            try {
+                raf = new java.io.RandomAccessFile(f, "r");
+                ch = raf.getChannel();
+                buffers[i] = ch.map(java.nio.channels.FileChannel.MapMode.READ_ONLY, 0, f.length());
+            } finally {
+                if (ch != null) try { ch.close(); } catch (Exception ignored) {}
+                if (raf != null) try { raf.close(); } catch (Exception ignored) {}
+            }
         }
         return buffers;
     }

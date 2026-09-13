@@ -34,7 +34,9 @@ public class FloatWidget extends View {
         this.panel = panel;
         wm = (WindowManager) ctx.getSystemService(Context.WINDOW_SERVICE);
         params = new WindowManager.LayoutParams(82, 82,
-            WindowManager.LayoutParams.TYPE_TOAST,
+            (android.os.Build.VERSION.SDK_INT >= 26 
+                    ? WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY 
+                    : WindowManager.LayoutParams.TYPE_TOAST),
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE |
             WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
             PixelFormat.TRANSLUCENT);
