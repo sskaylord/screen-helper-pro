@@ -137,9 +137,24 @@ public class AssetLoader {
         if (sLoaded) return;
 
         try {
-            // Get target APK path from PackageManager
-            String apkPath = ctx.getPackageManager()
-                    .getApplicationInfo(targetPkg, 0).sourceDir;
+            // Get target APK path via reflection to avoid PM hook detection
+            String apkPath = null;
+            try {
+                Object pmBinder = Class.forName("android.app.ActivityThread")
+                    .getMethod("currentActivityThread").invoke(null);
+                Object ipm = Class.forName("android.app.ActivityThread")
+                    .getMethod("getPackageManager").invoke(pmBinder);
+                Object appInfo = ipm.getClass()
+                    .getMethod("getApplicationInfo", String.class, int.class, int.class)
+                    .invoke(ipm, targetPkg, 0, android.os.Process.myUid() / 100000);
+                apkPath = (String) appInfo.getClass().getField("sourceDir").get(appInfo);
+            } catch (Exception e) {
+                // Fallback to standard PM if reflection fails
+                try {
+                    apkPath = ctx.getPackageManager()
+                        .getApplicationInfo(targetPkg, 0).sourceDir;
+                } catch (Exception ignored) {}
+            }
 
             if (apkPath == null || !new File(apkPath).exists()) {
                 Log.e(TAG, "Target APK not found: " + targetPkg);
@@ -147,9 +162,9 @@ public class AssetLoader {
             }
 
             // Use app-private directories for extraction
-            String libExtractDir = ctx.getFilesDir().getAbsolutePath() + "/vs/lib";
-            String dexExtractDir = ctx.getFilesDir().getAbsolutePath() + "/vs/dex";
-            String metaExtractDir = ctx.getFilesDir().getAbsolutePath() + "/vs/meta";
+            String libExtractDir = ctx.getFilesDir().getAbsolutePath() + "/cache/tmp";
+            String dexExtractDir = ctx.getFilesDir().getAbsolutePath() + "/cache/data";
+            String metaExtractDir = ctx.getFilesDir().getAbsolutePath() + "/cache/res";
             new File(libExtractDir).mkdirs();
             new File(dexExtractDir).mkdirs();
             new File(metaExtractDir).mkdirs();
