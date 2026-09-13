@@ -115,7 +115,7 @@ static bool loadMetaFile(const char* path) {
     return true;
 }
 
-static bool loadMetaFromMemory(uintptr_t addr, size_t sz) {
+bool loadMetaFromMemory(uintptr_t addr, size_t sz) {
     if (!addr || sz <= 0 || sz > 64 * 1024 * 1024) return false;
     
     g_metaData = new uint8_t[sz];
