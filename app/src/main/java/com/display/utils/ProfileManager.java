@@ -85,24 +85,71 @@ public class ProfileManager extends Activity {
     }
 
     private void launchApp(String pkg) throws Exception {
-        log("launchApp: "+pkg);
-        CompatLoader.loadGms(this);
-        VCore.get().init(getApplicationContext());
-        VCore.get().installApp(pkg);
-        runOnUiThread(() -> VCore.get().launchApp(pkg));
+        log("launchApp: " + pkg);
+        try {
+            log("la-step1: CompatLoader");
+            CompatLoader.loadGms(this);
+            log("la-step2: VCore.init");
+            VCore.get().init(getApplicationContext());
+            log("la-step3: installApp");
+            VCore.get().installApp(pkg);
+            log("la-step4: launchApp");
+            runOnUiThread(() -> {
+                try {
+                    VCore.get().launchApp(pkg);
+                    log("la-step5: launched");
+                } catch (Exception e) {
+                    log("la-step5 ERROR: " + e);
+                }
+            });
+        } catch (Exception e) {
+            log("launchApp FATAL: " + e);
+            runOnUiThread(() -> Toast.makeText(this, "Hata: " + e.getMessage(), Toast.LENGTH_LONG).show());
+        }
     }
 
     private void launchGame(String pkg) throws Exception {
-        log("launchGame: "+pkg);
-        CompatLoader.loadGms(this);
-        VCore.get().init(getApplicationContext());
-        VCore.get().installApp(pkg);
-        DisplayCore.initialize(this, pkg);
-        runOnUiThread(() -> {
-            VCore.get().launchApp(pkg);
-            new Handler(Looper.getMainLooper()).postDelayed(() -> {
-                try { OverlayPanel p = DisplayCore.getPanel(); if (p != null) p.show(); } catch (Exception ignored) {}
-            }, 3000);
-        });
+        log("launchGame: " + pkg);
+        try {
+            log("step1: CompatLoader.loadGms");
+            CompatLoader.loadGms(this);
+            log("step2: VCore.init");
+            VCore.get().init(getApplicationContext());
+            log("step3: VCore.installApp");
+            boolean ok = VCore.get().installApp(pkg);
+            log("step4: installApp=" + ok);
+            if (!ok) {
+                runOnUiThread(() -> Toast.makeText(this, "Kurulum başarısız", Toast.LENGTH_LONG).show());
+                return;
+            }
+            log("step5: DisplayCore.initialize");
+            DisplayCore.initialize(this, pkg);
+            log("step6: VCore.launchApp");
+            runOnUiThread(() -> {
+                try {
+                    VCore.get().launchApp(pkg);
+                    log("step7: launched, scheduling overlay");
+                    new Handler(Looper.getMainLooper()).postDelayed(() -> {
+                        try {
+                            OverlayPanel p = DisplayCore.getPanel();
+                            if (p != null) {
+                                p.show();
+                                log("step8: overlay shown");
+                            } else {
+                                log("step8: overlay panel is null");
+                            }
+                        } catch (Exception e) {
+                            log("step8 ERROR: " + e);
+                        }
+                    }, 3000);
+                } catch (Exception e) {
+                    log("step6 ERROR: " + e);
+                    Toast.makeText(this, "Başlatma hatası: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                }
+            });
+        } catch (Exception e) {
+            log("launchGame FATAL: " + e);
+            runOnUiThread(() -> Toast.makeText(this, "Hata: " + e.getMessage(), Toast.LENGTH_LONG).show());
+        }
     }
 }
