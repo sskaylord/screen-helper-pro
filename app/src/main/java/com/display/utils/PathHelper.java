@@ -30,6 +30,20 @@ public class PathHelper {
 
             pathMap.put(realDataPath, virtualPath);
             pathMap.put("/data/user/0/" + targetPackage, virtualPath);
+            
+            // Google Play Store & Services virtual mapping
+            String[] googlePackages = {
+                "com.android.vending",
+                "com.google.android.gms",
+                "com.google.android.gsf"
+            };
+            for (String pkg : googlePackages) {
+                String pkgVirtual = new File(virtualDataDir.getParentFile(), pkg).getAbsolutePath();
+                new File(pkgVirtual).mkdirs();
+                createSubDirs(pkgVirtual);
+                pathMap.put("/data/data/" + pkg, pkgVirtual);
+                pathMap.put("/data/user/0/" + pkg, pkgVirtual);
+            }
 
             createSubDirs(virtualPath);
             hookNativeIO();
