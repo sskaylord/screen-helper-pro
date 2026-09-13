@@ -86,7 +86,7 @@ public class VPackageManager {
                     VActivityManager.SandboxRecord rec = VActivityManager.get().getRecord(pkg);
                     if (rec != null && rec.appInfo != null) {
                         // Redirect dataDir to sandbox
-                        ApplicationInfo ai = (ApplicationInfo) rec.appInfo.clone();
+                        ApplicationInfo ai = new ApplicationInfo(rec.appInfo);
                         ai.dataDir = rec.dataDir;
                         ai.nativeLibraryDir = rec.nativeLibDir;
                         return ai;
