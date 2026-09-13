@@ -2,6 +2,8 @@
 #include <android/log.h>
 #include <string>
 #include <GLES/gl.h>
+#include <EGL/egl.h>
+#include <android/native_window_jni.h>
 #include <cstdint>
 #include <cstring>
 #include <cstdlib>
@@ -25,6 +27,10 @@ static int g_playerCount = 0;
 static float g_viewMatrix[16] = {};
 static int g_screenW = 1080, g_screenH = 1920;
 static bool g_initialized = false;
+static EGLDisplay g_eglDisplay = EGL_NO_DISPLAY;
+static EGLSurface g_eglSurface = EGL_NO_SURFACE;
+static EGLContext g_eglContext = EGL_NO_CONTEXT;
+static ANativeWindow* g_window = nullptr;
 
 static bool g_overlayOn = true, g_boxEnabled = true, g_cornerBox = true;
 static bool g_healthBar = true, g_showName = true, g_skeleton = true;
@@ -130,8 +136,67 @@ Java_com_display_utils_DisplaySurface_nativeDrawFrame(JNIEnv*, jobject, jlong pt
 
 extern "C" JNIEXPORT jlong JNICALL
 Java_com_display_utils_DisplaySurface_nativeInit(JNIEnv* env, jobject thiz, jobject surface) {
+    g_window = ANativeWindow_fromSurface(env, surface);
+    if (!g_window) {
+        LOGI("Failed to get ANativeWindow");
+        return 0L;
+    }
+    
+    g_eglDisplay = eglGetDisplay(EGL_DEFAULT_DISPLAY);
+    if (g_eglDisplay == EGL_NO_DISPLAY) {
+        LOGI("eglGetDisplay failed");
+        return 0L;
+    }
+    
+    EGLint major, minor;
+    if (!eglInitialize(g_eglDisplay, &major, &minor)) {
+        LOGI("eglInitialize failed");
+        return 0L;
+    }
+    
+    const EGLint configAttribs[] = {
+        EGL_SURFACE_TYPE, EGL_WINDOW_BIT,
+        EGL_BLUE_SIZE, 8, EGL_GREEN_SIZE, 8, EGL_RED_SIZE, 8,
+        EGL_ALPHA_SIZE, 8,
+        EGL_DEPTH_SIZE, 0,
+        EGL_NONE
+    };
+    
+    EGLConfig config;
+    EGLint numConfigs;
+    if (!eglChooseConfig(g_eglDisplay, configAttribs, &config, 1, &numConfigs) || numConfigs == 0) {
+        LOGI("eglChooseConfig failed");
+        return 0L;
+    }
+    
+    EGLint format;
+    eglGetConfigAttrib(g_eglDisplay, config, EGL_NATIVE_VISUAL_ID, &format);
+    ANativeWindow_setBuffersGeometry(g_window, 0, 0, format);
+    
+    g_eglSurface = eglCreateWindowSurface(g_eglDisplay, config, g_window, nullptr);
+    if (g_eglSurface == EGL_NO_SURFACE) {
+        LOGI("eglCreateWindowSurface failed");
+        return 0L;
+    }
+    
+    const EGLint ctxAttribs[] = { EGL_CONTEXT_CLIENT_VERSION, 1, EGL_NONE };
+    g_eglContext = eglCreateContext(g_eglDisplay, config, EGL_NO_CONTEXT, ctxAttribs);
+    if (g_eglContext == EGL_NO_CONTEXT) {
+        LOGI("eglCreateContext failed");
+        return 0L;
+    }
+    
+    if (!eglMakeCurrent(g_eglDisplay, g_eglSurface, g_eglSurface, g_eglContext)) {
+        LOGI("eglMakeCurrent failed");
+        return 0L;
+    }
+    
+    glClearColor(0.f, 0.f, 0.f, 0.f);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    
     g_initialized = true;
-    LOGI("Native renderer initialized");
+    LOGI("Native renderer initialized with EGL %d.%d", major, minor);
     return 1L;
 }
 
@@ -143,6 +208,17 @@ Java_com_display_utils_DisplaySurface_nativeOnResize(JNIEnv*, jobject, jlong ptr
 extern "C" JNIEXPORT void JNICALL
 Java_com_display_utils_DisplaySurface_nativeDestroy(JNIEnv*, jobject, jlong ptr) {
     g_initialized = false;
+    if (g_eglDisplay != EGL_NO_DISPLAY) {
+        eglMakeCurrent(g_eglDisplay, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
+        if (g_eglContext != EGL_NO_CONTEXT) eglDestroyContext(g_eglDisplay, g_eglContext);
+        if (g_eglSurface != EGL_NO_SURFACE) eglDestroySurface(g_eglDisplay, g_eglSurface);
+        eglTerminate(g_eglDisplay);
+    }
+    if (g_window) ANativeWindow_release(g_window);
+    g_eglDisplay = EGL_NO_DISPLAY;
+    g_eglSurface = EGL_NO_SURFACE;
+    g_eglContext = EGL_NO_CONTEXT;
+    g_window = nullptr;
 }
 
 extern "C" JNIEXPORT void JNICALL
