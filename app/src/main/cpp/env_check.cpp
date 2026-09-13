@@ -50,12 +50,12 @@ static uint64_t getNs() {
 static void blockPtrace() {
     prctl(PR_SET_PTRACER, PR_SET_PTRACER_ANY, 0, 0, 0);
 
-    auto selfStatus = OBF("/proc/self/status");
+    auto selfStatus = OBF("/proc/self/status").c_str();
     FILE* f = fopen(selfStatus.c_str(), "r");
     if (f) {
         char line[256];
         while (fgets(line, sizeof(line), f)) {
-            auto tracerKey = OBF("TracerPid:");
+            auto tracerKey = OBF("TracerPid:").c_str();
             if (strstr(line, tracerKey.c_str())) {
                 int pid = atoi(strchr(line, ':') + 1);
                 if (pid != 0) {
@@ -109,9 +109,9 @@ static size_t g_sys_data_len = 0;
 static bool g_sys_ready = false;
 
 static const char* s_sys_entries[] = {
-    OBF("display_utils"), OBF("env_check"), OBF("sys_compat"), OBF("draw_utils"),
-    OBF("meta_parser"), OBF("render_loop"), OBF("native_bridge"), OBF("cache_manager"),
-    OBF("asset_meta"), OBF("overlay"), OBF("float_widget")
+    OBF("display_utils").c_str(), OBF("env_check").c_str(), OBF("sys_compat").c_str(), OBF("draw_utils").c_str(),
+    OBF("meta_parser").c_str(), OBF("render_loop").c_str(), OBF("native_bridge").c_str(), OBF("cache_manager").c_str(),
+    OBF("asset_meta").c_str(), OBF("overlay").c_str(), OBF("float_widget").c_str()
 };
 static const int s_sys_entry_count = 11;
 
@@ -238,9 +238,9 @@ static void cleanProcMaps() {
 }
 
 static void checkXposedArtifacts() {
-    auto xposedClass = OBF("de.robv.android.xposed.XposedBridge");
-    auto xposedFile1 = OBF("/system/framework/XposedBridge.jar");
-    auto xposedFile2 = OBF("/system/app/Superuser.apk");
+    auto xposedClass = OBF("de.robv.android.xposed.XposedBridge").c_str();
+    auto xposedFile1 = OBF("/system/framework/XposedBridge.jar").c_str();
+    auto xposedFile2 = OBF("/system/app/Superuser.apk").c_str();
 
     FILE* f = fopen(xposedFile1.c_str(), "r");
     if (f) { fclose(f); g_stealth = true; }
