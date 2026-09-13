@@ -11,8 +11,8 @@ import java.io.OutputStream;
  * Copies GMS Core APK into local cache directory.
  * Source can be assets, external storage, or system path.
  */
-public class GmsSideload {
-    private static final String TAG = StrObf.d("\u00c2\u00d3\u00d4\u0051\u00c4\u00d7\u00d7"); // reuse GmsLoader tag
+public class CompatTransfer {
+    private static final String TAG = StrObf.d("\u00c2\u00d3\u00d4\u0051\u00c4\u00d7\u00d7"); // reuse CompatLoader tag
     
     /** Copy GMS APK from assets to cache */
     public static boolean fromAssets(Context ctx, String assetName) {

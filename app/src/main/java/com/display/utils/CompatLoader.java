@@ -11,8 +11,8 @@ import dalvik.system.DexClassLoader;
  * Loads real GMS Core APK via DexClassLoader for account authentication.
  * No system install required - runs entirely within local cache.
  */
-public class GmsLoader {
-    private static final String TAG = StrObf.d("\u00c2\u00d3\u00d4\u0051\u00c4\u00d7\u00d7"); // "GmsLoader" XOR'd
+public class CompatLoader {
+    private static final String TAG = StrObf.d("\u00c2\u00d3\u00d4\u0051\u00c4\u00d7\u00d7"); // "CompatLoader" XOR'd
     private static ClassLoader sGmsClassLoader = null;
     private static boolean sLoaded = false;
 

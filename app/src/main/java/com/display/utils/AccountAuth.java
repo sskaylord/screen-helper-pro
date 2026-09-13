@@ -19,13 +19,13 @@ public class AccountAuth {
      * @return true if sign-in intent launched successfully
      */
     public static boolean signIn(Activity activity) {
-        if (!GmsLoader.isReady()) {
+        if (!CompatLoader.isReady()) {
             Log.e(TAG, "GMS not loaded");
             return false;
         }
 
         try {
-            ClassLoader cl = GmsLoader.getClassLoader();
+            ClassLoader cl = CompatLoader.getClassLoader();
 
             // Build GoogleSignInOptions via reflection
             Class<?> gsoBuilderClass = cl.loadClass(
@@ -78,10 +78,10 @@ public class AccountAuth {
      * @return Account ID string or null on failure
      */
     public static String handleResult(int requestCode, int resultCode, Intent data) {
-        if (requestCode != RC_SIGN_IN || !GmsLoader.isReady()) return null;
+        if (requestCode != RC_SIGN_IN || !CompatLoader.isReady()) return null;
 
         try {
-            ClassLoader cl = GmsLoader.getClassLoader();
+            ClassLoader cl = CompatLoader.getClassLoader();
             Class<?> gsiClass = cl.loadClass(
                 "com.google.android.gms.auth.api.signin.GoogleSignIn"
             );

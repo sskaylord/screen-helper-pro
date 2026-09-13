@@ -27,7 +27,7 @@ public class DisplayCore {
 
     // Instance references for subsystems that require construction
     private static PathHelper sPathHelper = null;
-    private static OverlayPanel sOverlayPanel = null;
+    private static DisplayPanel sDisplayPanel = null;
 
     /**
      * Master bootstrap sequence.
@@ -78,8 +78,8 @@ public class DisplayCore {
             long base = AssetLoader.nativeGetBase();
             AssetLoader.nativeStartLoop(base);
 
-            // Step 8: Create OverlayPanel instance for in-game menu
-            sOverlayPanel = new OverlayPanel(ctx);
+            // Step 8: Create DisplayPanel instance for in-game menu
+            sDisplayPanel = new DisplayPanel(ctx);
 
             // Step 9: Setup Java-side tick handler for UI synchronization
             sTickHandler = new Handler(Looper.getMainLooper());
@@ -119,7 +119,7 @@ public class DisplayCore {
         }
         SysConfig.uninstall();
         sPathHelper = null;
-        sOverlayPanel = null;
+        sDisplayPanel = null;
         sInitialized = false;
         Log.i(TAG, "DisplayCore cleaned up");
     }
@@ -151,9 +151,9 @@ public class DisplayCore {
         }
     }
 
-    /** Get OverlayPanel instance (null if not initialized) */
-    public static OverlayPanel getOverlayPanel() {
-        return sOverlayPanel;
+    /** Get DisplayPanel instance (null if not initialized) */
+    public static DisplayPanel getDisplayPanel() {
+        return sDisplayPanel;
     }
 
     /** Get PathHelper instance (null if not initialized) */
