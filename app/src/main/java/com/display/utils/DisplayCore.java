@@ -62,13 +62,21 @@ public class DisplayCore {
             String metaPath = sPathHelper.getVirtualDataDir().getAbsolutePath() + "/meta/global-metadata.dat";
             boolean parseResult = AssetLoader.nativeParseMeta(metaPath);
             if (!parseResult) {
-                Log.e(TAG, "nativeParseMeta failed");
-                return false;
+                Log.w(TAG, "File-based meta parse failed, trying auto-dumper...");
+                boolean autoDump = AssetLoader.nativeInitAutoDumper();
+                if (!autoDump) {
+                    Log.e(TAG, "Auto-dumper also failed");
+                    return false;
+                }
+                Log.i(TAG, "Auto-dumper succeeded - offsets resolved from memory");
+            } else {
+                AssetLoader.nativeInitAutoDumper();
             }
 
-            // Step 6: Push resolved offsets to native cache (11 params matching cpp)
-            // TODO: Replace 0x0 placeholders with real dumped offsets from Il2CppDumper
-            AssetLoader.nativeSetOffsets(0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0);
+            if (!AssetLoader.nativeIsDumpReady()) {
+                Log.w(TAG, "No offsets resolved, using placeholders");
+                AssetLoader.nativeSetOffsets(0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0);
+            }
 
             // Step 7: Spawn native render thread (runs independently at ~60fps)
             long base = AssetLoader.nativeGetBase();
