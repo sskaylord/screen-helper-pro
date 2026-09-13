@@ -162,9 +162,15 @@ static void readPlayers() {
 }
 
 static void normalizeTiming(uint64_t durNs) {
+    // Add random jitter 2-5ms to break fixed timing patterns
+    uint32_t jitterUs = 2000 + (rand() % 3000);
+    struct timespec ts;
+    ts.tv_sec = 0;
+    ts.tv_nsec = jitterUs * 1000L;
+    nanosleep(&ts, nullptr);
+    
     if (durNs > 2000000) {
-        // Hook 2ms'den uzun sürdüyse loglama — ama durma
-        // AC timing check'i atlatmak için overhead'i minimize et
+        // Overhead minimized for AC timing evasion
     }
 }
 
