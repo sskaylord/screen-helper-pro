@@ -3,7 +3,6 @@ package com.display.utils.engine;
 import android.app.Activity;
 import android.app.Application;
 import android.app.Instrumentation;
-import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
@@ -28,85 +27,92 @@ public class VInstrumentation {
 
     public void handleStubActivity(Activity stub, Intent realIntent, ActivityInfo targetInfo,
                                     VActivityManager.SandboxRecord record, int slot) {
-        if (!mHooked) hookInstrumentation();
+        Log.i(TAG, "handleStubActivity: slot=" + slot + " pkg=" + record.packageName);
 
         String realClassName = realIntent.getComponent() != null ?
             realIntent.getComponent().getClassName() : targetInfo.name;
 
-        Log.i(TAG, "Launching: " + realClassName + " in stub[" + slot + "]");
+        Log.i(TAG, "Real class: " + realClassName);
 
         try {
             ClassLoader targetCL = VClassLoader.getTargetClassLoader();
-            if (targetCL == null) { stub.finish(); return; }
+            if (targetCL == null) {
+                Log.e(TAG, "No target ClassLoader");
+                stub.finish();
+                return;
+            }
 
             // Load real activity class
             Class<?> realClass = targetCL.loadClass(realClassName);
+            Log.i(TAG, "Loaded class: " + realClass.getName());
 
             // Get ActivityThread
             Class<?> atClass = Class.forName("android.app.ActivityThread");
             Method currentAT = atClass.getMethod("currentActivityThread");
             Object activityThread = currentAT.invoke(null);
 
-            // Get mActivities
+            // Get mActivities map
             Field activitiesField = atClass.getDeclaredField("mActivities");
             activitiesField.setAccessible(true);
             Object activitiesMap = activitiesField.get(activityThread);
 
-            // Find ActivityClientRecord for this stub
-            java.lang.reflect.Method getTokenMethod = Activity.class.getMethod("getActivityToken");
+            // Find ActivityClientRecord via token
+            Method getTokenMethod = Activity.class.getMethod("getActivityToken");
             IBinder token = (IBinder) getTokenMethod.invoke(stub);
+
             Method mapGet = activitiesMap.getClass().getMethod("get", Object.class);
             Object acr = mapGet.invoke(activitiesMap, token);
 
-            if (acr == null) { stub.finish(); return; }
+            if (acr == null) {
+                Log.e(TAG, "No ACR for token");
+                stub.finish();
+                return;
+            }
 
-            // Replace the activity in the record using reflection
-            Class<?> acrClass = acr.getClass();
-            Field activityField = acrClass.getDeclaredField("activity");
+            // Replace activity in ACR
+            Field activityField = acr.getClass().getDeclaredField("activity");
             activityField.setAccessible(true);
 
-            // Get Instrumentation from ActivityThread
+            // Get Instrumentation
             Field instrField = atClass.getDeclaredField("mInstrumentation");
             instrField.setAccessible(true);
             Instrumentation instr = (Instrumentation) instrField.get(activityThread);
 
-            // Get Application
-            Field appField = atClass.getDeclaredField("mInitialApplication");
-            appField.setAccessible(true);
-            Application app = (Application) appField.get(activityThread);
-            if (app == null) app = stub.getApplication();
-
-            // Create real activity via Instrumentation.newActivity(ClassLoader, String, Intent)
+            // Create real activity
             Activity realActivity = instr.newActivity(targetCL, realClassName, realIntent);
+            if (realActivity == null) {
+                Log.e(TAG, "newActivity returned null");
+                stub.finish();
+                return;
+            }
 
-            if (realActivity == null) { stub.finish(); return; }
+            // Put real activity into ACR
+            activityField.set(acr, realActivity);
 
-            
-                                    activityField.set(acr, realActivity);
+            // Call lifecycle via reflection
+            Method onCreate = Activity.class.getDeclaredMethod("onCreate", Bundle.class);
+            onCreate.setAccessible(true);
+            onCreate.invoke(realActivity, (Bundle) null);
 
-            // Use reflection to call protected lifecycle methods
-            Method onCreateMethod = Activity.class.getDeclaredMethod("onCreate", Bundle.class);
-            onCreateMethod.setAccessible(true);
-            onCreateMethod.invoke(realActivity, (Bundle) null);
+            Method onStart = Activity.class.getDeclaredMethod("onStart");
+            onStart.setAccessible(true);
+            onStart.invoke(realActivity);
 
-            Method onStartMethod = Activity.class.getDeclaredMethod("onStart");
-            onStartMethod.setAccessible(true);
-            onStartMethod.invoke(realActivity);
+            Method onResume = Activity.class.getDeclaredMethod("onResume");
+            onResume.setAccessible(true);
+            onResume.invoke(realActivity);
 
-            Method onResumeMethod = Activity.class.getDeclaredMethod("onResume");
-            onResumeMethod.setAccessible(true);
-            onResumeMethod.invoke(realActivity);
-
-            Log.i(TAG, "Real activity launched: " + realClassName);
+            Log.i(TAG, "SUCCESS: " + realClassName + " launched in sandbox");
 
         } catch (Exception e) {
-            Log.e(TAG, "Launch failed: " + e);
+            Log.e(TAG, "FAILED: " + e);
             e.printStackTrace();
             stub.finish();
         }
     }
 
-    private void hookInstrumentation() {
+    public void ensureHooked() {
+        if (mHooked) return;
         try {
             Class<?> atClass = Class.forName("android.app.ActivityThread");
             Method currentAT = atClass.getMethod("currentActivityThread");
@@ -122,7 +128,7 @@ public class VInstrumentation {
             mHooked = true;
             Log.i(TAG, "Instrumentation hooked");
         } catch (Exception e) {
-            Log.e(TAG, "Instrumentation hook failed: " + e);
+            Log.e(TAG, "Hook failed: " + e);
         }
     }
 }

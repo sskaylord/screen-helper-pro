@@ -299,17 +299,49 @@ public class VActivityManager {
     }
 
     public void launchApp(String pkg) {
+        Log.i(TAG, "launchApp: " + pkg + " installed=" + mInstalledApps.containsKey(pkg));
         SandboxRecord rec = mInstalledApps.get(pkg);
         if (rec == null) { installApp(pkg); rec = mInstalledApps.get(pkg); }
-        if (rec == null) return;
+        if (rec == null) { Log.e(TAG, "No record for " + pkg); return; }
 
-        Intent launchIntent = mContext.getPackageManager().getLaunchIntentForPackage(pkg);
-        if (launchIntent == null) {
+        // Get real launch intent
+        Intent realIntent = mContext.getPackageManager().getLaunchIntentForPackage(pkg);
+        if (realIntent == null) {
             Log.e(TAG, "No launch intent for " + pkg);
             return;
         }
-        launchIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        mContext.startActivity(launchIntent);
+
+        // Resolve real activity
+        ComponentName comp = realIntent.getComponent();
+        if (comp == null) {
+            var ri = mContext.getPackageManager().resolveActivity(realIntent, 0);
+            if (ri != null && ri.activityInfo != null) {
+                comp = new ComponentName(ri.activityInfo.packageName, ri.activityInfo.name);
+            }
+        }
+        if (comp == null) { Log.e(TAG, "Cannot resolve activity for " + pkg); return; }
+
+        // Get ActivityInfo
+        ActivityInfo targetInfo = null;
+        try { targetInfo = mContext.getPackageManager().getActivityInfo(comp, 0); } catch (Exception ignored) {}
+
+        // Allocate stub slot DIRECTLY (bypass AMS hook)
+        int slot = allocSlot(false);
+        if (slot < 0) { Log.e(TAG, "No free stub slot"); return; }
+
+        mRealIntents.put(slot, new Intent(realIntent));
+        mTargetPkgs.put(slot, pkg);
+        if (targetInfo != null) mTargetInfos.put(slot, targetInfo);
+
+        // Launch stub activity directly
+        String stubClass = sStubClasses[slot];
+        Intent stubIntent = new Intent();
+        stubIntent.setComponent(new ComponentName(HOST_PKG, stubClass));
+        stubIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        stubIntent.putExtra("_vs", slot);
+
+        Log.i(TAG, "Launching stub[" + slot + "] for " + pkg + "/" + comp.getClassName());
+        mContext.startActivity(stubIntent);
     }
 
     public void uninstallApp(String pkg) {
