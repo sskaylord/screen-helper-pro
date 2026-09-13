@@ -14,6 +14,7 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
+
 import androidx.fragment.app.Fragment;
 
 public class HomeFragment extends Fragment {
@@ -35,10 +36,10 @@ public class HomeFragment extends Fragment {
         root.setOrientation(LinearLayout.VERTICAL);
         root.setBackgroundColor(BG);
 
-        // === BANNER (anime girl image) ===
+        // === BANNER ===
         FrameLayout bannerFrame = new FrameLayout(requireContext());
         LinearLayout.LayoutParams bannerLp = new LinearLayout.LayoutParams(
-            LinearLayout.LayoutParams.MATCH_PARENT, 900);
+            LinearLayout.LayoutParams.MATCH_PARENT, dpToPx(450));
         bannerFrame.setLayoutParams(bannerLp);
 
         ImageView bannerImg = new ImageView(requireContext());
@@ -46,161 +47,173 @@ public class HomeFragment extends Fragment {
             bannerImg.setImageResource(R.drawable.splash_bg);
             bannerImg.setScaleType(ImageView.ScaleType.CENTER_CROP);
         } catch (Exception ignored) {
-            bannerImg.setBackgroundColor(0xFF3D1040);
+            GradientDrawable fallback = new GradientDrawable(
+                GradientDrawable.Orientation.TOP_BOTTOM,
+                new int[]{0xFF3D1040, 0xFF1A0A1E});
+            bannerImg.setBackground(fallback);
         }
         bannerFrame.addView(bannerImg, new FrameLayout.LayoutParams(
             FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT));
 
-        // Top overlay: AZUREHUB title + icons
-        LinearLayout topOverlay = new LinearLayout(requireContext());
-        topOverlay.setOrientation(LinearLayout.HORIZONTAL);
-        topOverlay.setGravity(Gravity.CENTER_VERTICAL);
-        topOverlay.setPadding(30, 40, 30, 0);
+        // Top bar overlay
+        LinearLayout topBar = new LinearLayout(requireContext());
+        topBar.setOrientation(LinearLayout.HORIZONTAL);
+        topBar.setGravity(Gravity.CENTER_VERTICAL);
+        topBar.setPadding(dpToPx(16), dpToPx(20), dpToPx(16), 0);
         FrameLayout.LayoutParams topLp = new FrameLayout.LayoutParams(
             FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.WRAP_CONTENT);
         topLp.gravity = Gravity.TOP;
-        topOverlay.setLayoutParams(topLp);
+        topBar.setLayoutParams(topLp);
 
         TextView logo = new TextView(requireContext());
         logo.setText("\uD83D\uDC51 AZUREHUB");
         logo.setTextColor(Color.WHITE);
-        logo.setTextSize(22);
+        logo.setTextSize(20);
         logo.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.BOLD));
         logo.setLayoutParams(new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
-        topOverlay.addView(logo);
+        topBar.addView(logo);
 
         TextView bell = new TextView(requireContext());
         bell.setText("\uD83D\uDD14");
-        bell.setTextSize(20);
-        bell.setPadding(0, 0, 20, 0);
-        topOverlay.addView(bell);
+        bell.setTextSize(18);
+        bell.setPadding(0, 0, dpToPx(12), 0);
+        topBar.addView(bell);
 
         TextView gear = new TextView(requireContext());
-        gear.setText("\u2699\uFE0F");
-        gear.setTextSize(20);
-        topOverlay.addView(gear);
+        gear.setText("\u2699");
+        gear.setTextColor(Color.WHITE);
+        gear.setTextSize(18);
+        topBar.addView(gear);
 
-        bannerFrame.addView(topOverlay);
+        bannerFrame.addView(topBar);
 
-        // Subtitle overlay
-        LinearLayout subOverlay = new LinearLayout(requireContext());
-        subOverlay.setOrientation(LinearLayout.VERTICAL);
-        subOverlay.setPadding(30, 0, 0, 0);
+        // Subtitle
+        LinearLayout sub = new LinearLayout(requireContext());
+        sub.setOrientation(LinearLayout.VERTICAL);
+        sub.setPadding(dpToPx(16), 0, 0, 0);
         FrameLayout.LayoutParams subLp = new FrameLayout.LayoutParams(
             FrameLayout.LayoutParams.WRAP_CONTENT, FrameLayout.LayoutParams.WRAP_CONTENT);
         subLp.gravity = Gravity.TOP | Gravity.START;
-        subLp.topMargin = 80;
-        subOverlay.setLayoutParams(subLp);
+        subLp.topMargin = dpToPx(50);
+        sub.setLayoutParams(subLp);
 
-        TextView sub1 = new TextView(requireContext());
-        sub1.setText("\uD83D\uDCE6 Virtual App");
-        sub1.setTextColor(PINK_LIGHT);
-        sub1.setTextSize(13);
-        subOverlay.addView(sub1);
+        TextView s1 = new TextView(requireContext());
+        s1.setText("\uD83D\uDCE6 Virtual App");
+        s1.setTextColor(PINK_LIGHT);
+        s1.setTextSize(12);
+        sub.addView(s1);
 
-        TextView sub2 = new TextView(requireContext());
-        sub2.setText("More Apps  More Freedom");
-        sub2.setTextColor(TD);
-        sub2.setTextSize(12);
-        subOverlay.addView(sub2);
+        TextView s2 = new TextView(requireContext());
+        s2.setText("More Apps  More Freedom");
+        s2.setTextColor(TD);
+        s2.setTextSize(11);
+        sub.addView(s2);
 
-        bannerFrame.addView(subOverlay);
+        bannerFrame.addView(sub);
 
-        // "Play Clone Enjoy" text
+        // Play Clone Enjoy
         TextView pce = new TextView(requireContext());
         pce.setText("Play\nClone\nEnjoy \u2661");
         pce.setTextColor(Color.WHITE);
-        pce.setTextSize(20);
+        pce.setTextSize(18);
         pce.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.BOLD));
-        pce.setPadding(30, 0, 0, 0);
+        pce.setPadding(dpToPx(16), 0, 0, 0);
         FrameLayout.LayoutParams pceLp = new FrameLayout.LayoutParams(
             FrameLayout.LayoutParams.WRAP_CONTENT, FrameLayout.LayoutParams.WRAP_CONTENT);
         pceLp.gravity = Gravity.BOTTOM | Gravity.START;
-        pceLp.bottomMargin = 40;
+        pceLp.bottomMargin = dpToPx(20);
         pce.setLayoutParams(pceLp);
         bannerFrame.addView(pce);
 
         root.addView(bannerFrame);
 
         // === SPOOFER CARD ===
-        LinearLayout spooferCard = new LinearLayout(requireContext());
-        spooferCard.setOrientation(LinearLayout.HORIZONTAL);
-        spooferCard.setGravity(Gravity.CENTER_VERTICAL);
-        spooferCard.setPadding(30, 24, 30, 24);
-        LinearLayout.LayoutParams scLp = new LinearLayout.LayoutParams(
+        LinearLayout card = new LinearLayout(requireContext());
+        card.setOrientation(LinearLayout.HORIZONTAL);
+        card.setGravity(Gravity.CENTER_VERTICAL);
+        card.setPadding(dpToPx(16), dpToPx(14), dpToPx(16), dpToPx(14));
+        LinearLayout.LayoutParams cardLp = new LinearLayout.LayoutParams(
             LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-        scLp.setMargins(30, 20, 30, 0);
-        spooferCard.setLayoutParams(scLp);
+        cardLp.setMargins(dpToPx(16), dpToPx(12), dpToPx(16), 0);
+        card.setLayoutParams(cardLp);
 
-        GradientDrawable scBg = new GradientDrawable();
-        scBg.setColor(CARD);
-        scBg.setCornerRadius(20);
-        spooferCard.setBackground(scBg);
+        GradientDrawable cardBg = new GradientDrawable();
+        cardBg.setColor(CARD);
+        cardBg.setCornerRadius(dpToPx(16));
+        card.setBackground(cardBg);
 
-        TextView spIcon = new TextView(requireContext());
-        spIcon.setText("\uD83D\uDE08");
-        spIcon.setTextSize(28);
-        spIcon.setPadding(0, 0, 20, 0);
-        spooferCard.addView(spIcon);
+        TextView cardIcon = new TextView(requireContext());
+        cardIcon.setText("\uD83D\uDE08");
+        cardIcon.setTextSize(26);
+        cardIcon.setPadding(0, 0, dpToPx(12), 0);
+        card.addView(cardIcon);
 
-        LinearLayout spTexts = new LinearLayout(requireContext());
-        spTexts.setOrientation(LinearLayout.VERTICAL);
-        spTexts.setLayoutParams(new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
+        LinearLayout cardTexts = new LinearLayout(requireContext());
+        cardTexts.setOrientation(LinearLayout.VERTICAL);
+        cardTexts.setLayoutParams(new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
 
-        TextView sp1 = new TextView(requireContext());
-        sp1.setText("Spoofer");
-        sp1.setTextColor(TW);
-        sp1.setTextSize(16);
-        sp1.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.BOLD));
-        spTexts.addView(sp1);
+        TextView ct1 = new TextView(requireContext());
+        ct1.setText("Spoofer");
+        ct1.setTextColor(TW);
+        ct1.setTextSize(15);
+        ct1.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.BOLD));
+        cardTexts.addView(ct1);
 
-        TextView sp2 = new TextView(requireContext());
-        sp2.setText("Random Android ID\nDevice Spoofing");
-        sp2.setTextColor(TD);
-        sp2.setTextSize(12);
-        spTexts.addView(sp2);
+        TextView ct2 = new TextView(requireContext());
+        ct2.setText("Random Android ID\nDevice Spoofing");
+        ct2.setTextColor(TD);
+        ct2.setTextSize(11);
+        cardTexts.addView(ct2);
 
-        spooferCard.addView(spTexts);
+        card.addView(cardTexts);
 
-        TextView spArrow = new TextView(requireContext());
-        spArrow.setText("\u203A");
-        spArrow.setTextColor(TD);
-        spArrow.setTextSize(24);
-        spooferCard.addView(spArrow);
+        TextView arrow = new TextView(requireContext());
+        arrow.setText("\u203A");
+        arrow.setTextColor(TD);
+        arrow.setTextSize(22);
+        card.addView(arrow);
 
-        spooferCard.setOnClickListener(v -> startActivity(new android.content.Intent(getActivity(), com.display.utils.ProfileManager.class)));
-        root.addView(spooferCard);
+        card.setOnClickListener(v -> {
+            if (getActivity() != null) {
+                ((MainActivity) getActivity()).switchTabPublic(1);
+            }
+        });
+        root.addView(card);
 
-        // === FAB (+ button) ===
+        // === FAB ===
         FrameLayout fabFrame = new FrameLayout(requireContext());
         fabFrame.setLayoutParams(new LinearLayout.LayoutParams(
-            LinearLayout.LayoutParams.MATCH_PARENT, 120));
+            LinearLayout.LayoutParams.MATCH_PARENT, dpToPx(70)));
 
         TextView fab = new TextView(requireContext());
         fab.setText("+");
         fab.setTextColor(Color.WHITE);
-        fab.setTextSize(28);
+        fab.setTextSize(26);
         fab.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.BOLD));
         fab.setGravity(Gravity.CENTER);
         GradientDrawable fabBg = new GradientDrawable();
         fabBg.setColor(PINK);
-        fabBg.setCornerRadius(60);
+        fabBg.setCornerRadius(dpToPx(30));
         fab.setBackground(fabBg);
-        FrameLayout.LayoutParams fabLp = new FrameLayout.LayoutParams(110, 110);
+        FrameLayout.LayoutParams fabLp = new FrameLayout.LayoutParams(dpToPx(56), dpToPx(56));
         fabLp.gravity = Gravity.END | Gravity.CENTER_VERTICAL;
-        fabLp.rightMargin = 30;
+        fabLp.rightMargin = dpToPx(16);
         fab.setLayoutParams(fabLp);
         fab.setOnClickListener(v -> startActivity(new Intent(getActivity(), ProfileManager.class)));
         fabFrame.addView(fab);
         root.addView(fabFrame);
 
-        // Bottom spacer
+        // Spacer
         View spacer = new View(requireContext());
         spacer.setLayoutParams(new LinearLayout.LayoutParams(
-            LinearLayout.LayoutParams.MATCH_PARENT, 60));
+            LinearLayout.LayoutParams.MATCH_PARENT, dpToPx(30)));
         root.addView(spacer);
 
         scroll.addView(root);
         return scroll;
+    }
+
+    private int dpToPx(int dp) {
+        return (int) (dp * getResources().getDisplayMetrics().density);
     }
 }

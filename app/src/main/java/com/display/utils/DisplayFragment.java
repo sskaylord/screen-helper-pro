@@ -1,6 +1,5 @@
 package com.display.utils;
 
-import android.app.Fragment;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
@@ -12,123 +11,185 @@ import android.view.ViewGroup;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
+import android.widget.Toast;
 
-/**
- * Display and overlay settings fragment.
- * Shows ESP toggle controls and visual customization options.
- * Stealth-named to appear as screen configuration utility.
- */
+import androidx.fragment.app.Fragment;
+
+import java.util.UUID;
+
 public class DisplayFragment extends Fragment {
+    private static final int BG = 0xFF1A0A1E;
+    private static final int CARD = 0xFF2D1233;
+    private static final int PINK = 0xFFEC4899;
+    private static final int TW = 0xFFFCE7F3;
+    private static final int TD = 0xFFD4A0B0;
 
-    private static final int BG_DARK = 0xFF0A0E1A;
-    private static final int CARD_BG = 0xFF111827;
-    private static final int ACCENT = 0xFF3B82F6;
-    private static final int TEXT_WHITE = 0xFFE0E8F0;
-    private static final int TEXT_DIM = 0xFF8899AA;
+    private TextView androidIdText;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        ScrollView scroll = new ScrollView(getActivity());
-        scroll.setBackgroundColor(BG_DARK);
+        ScrollView scroll = new ScrollView(requireContext());
+        scroll.setBackgroundColor(BG);
 
-        LinearLayout content = new LinearLayout(getActivity());
-        content.setOrientation(LinearLayout.VERTICAL);
-        content.setPadding(40, 30, 40, 40);
+        LinearLayout root = new LinearLayout(requireContext());
+        root.setOrientation(LinearLayout.VERTICAL);
+        root.setBackgroundColor(BG);
+        root.setPadding(dp(16), dp(16), dp(16), dp(16));
 
-        // Header card
-        content.addView(makeHeader());
-        content.addView(makeSpacer(20));
+        // Title
+        TextView title = new TextView(requireContext());
+        title.setText("Spoofer");
+        title.setTextColor(TW);
+        title.setTextSize(20);
+        title.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.BOLD));
+        title.setPadding(0, 0, 0, dp(16));
+        root.addView(title);
 
-        // Feature toggles placeholder
-        String[] features = {
-            "Box Display", "Health Indicator", "Skeleton View", "Name Label",
-            "Distance Info", "Weapon Icon", "Charm Highlight", "Crosshair",
-            "Snap Line", "Team Filter", "Visible Only", "Auto Track"
+        // Random Android ID card
+        LinearLayout idCard = makeCard();
+        idCard.setOrientation(LinearLayout.HORIZONTAL);
+        idCard.setGravity(Gravity.CENTER_VERTICAL);
+
+        TextView idIcon = new TextView(requireContext());
+        idIcon.setText("\uD83D\uDE08");
+        idIcon.setTextSize(24);
+        idIcon.setPadding(0, 0, dp(12), 0);
+        idCard.addView(idIcon);
+
+        LinearLayout idTexts = new LinearLayout(requireContext());
+        idTexts.setOrientation(LinearLayout.VERTICAL);
+        idTexts.setLayoutParams(new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
+
+        TextView idTitle = new TextView(requireContext());
+        idTitle.setText("Rastgele Android ID");
+        idTitle.setTextColor(TW);
+        idTitle.setTextSize(14);
+        idTitle.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.BOLD));
+        idTexts.addView(idTitle);
+
+        TextView idSub = new TextView(requireContext());
+        idSub.setText("Her a\u00e7\u0131l\u0131\u015fta yeni ID olu\u015fturur");
+        idSub.setTextColor(TD);
+        idSub.setTextSize(11);
+        idTexts.addView(idSub);
+
+        idCard.addView(idTexts);
+
+        // Toggle placeholder
+        TextView toggle = new TextView(requireContext());
+        toggle.setText("\u25CF");
+        toggle.setTextColor(PINK);
+        toggle.setTextSize(20);
+        idCard.addView(toggle);
+
+        root.addView(idCard);
+
+        // Android ID display
+        LinearLayout idRow = makeCard();
+        idRow.setOrientation(LinearLayout.HORIZONTAL);
+        idRow.setGravity(Gravity.CENTER_VERTICAL);
+
+        TextView idLabel = new TextView(requireContext());
+        idLabel.setText("Android ID");
+        idLabel.setTextColor(TD);
+        idLabel.setTextSize(13);
+        idLabel.setLayoutParams(new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
+        idRow.addView(idLabel);
+
+        androidIdText = new TextView(requireContext());
+        androidIdText.setText(UUID.randomUUID().toString().substring(0, 18) + "...");
+        androidIdText.setTextColor(TW);
+        androidIdText.setTextSize(12);
+        idRow.addView(androidIdText);
+
+        root.addView(idRow);
+
+        // Generate button
+        TextView genBtn = makeButton("+ Rastgele ID Olu\u015ftur");
+        genBtn.setOnClickListener(v -> {
+            androidIdText.setText(UUID.randomUUID().toString().substring(0, 18) + "...");
+            Toast.makeText(requireContext(), "Yeni ID olu\u015fturuldu", Toast.LENGTH_SHORT).show();
+        });
+        root.addView(genBtn);
+
+        // Device info rows
+        String[][] rows = {
+            {"Cihaz Modeli", "Random"},
+            {"Manufacturer", "Random"},
+            {"Android Versiyon", "Random"},
+            {"IMEI (SIM)", "Random"},
+            {"MAC Adresi", "Random"}
         };
 
-        for (String feature : features) {
-            content.addView(makeToggleRow(feature));
-            content.addView(makeSpacer(8));
+        for (String[] row : rows) {
+            LinearLayout r = makeCard();
+            r.setOrientation(LinearLayout.HORIZONTAL);
+            r.setGravity(Gravity.CENTER_VERTICAL);
+
+            TextView name = new TextView(requireContext());
+            name.setText(row[0]);
+            name.setTextColor(TW);
+            name.setTextSize(13);
+            name.setLayoutParams(new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
+            r.addView(name);
+
+            TextView val = new TextView(requireContext());
+            val.setText(row[1]);
+            val.setTextColor(TD);
+            val.setTextSize(12);
+            r.addView(val);
+
+            TextView arr = new TextView(requireContext());
+            arr.setText("\u203A");
+            arr.setTextColor(TD);
+            arr.setTextSize(16);
+            arr.setPadding(dp(8), 0, 0, 0);
+            r.addView(arr);
+
+            root.addView(r);
         }
 
-        scroll.addView(content);
+        // Apply button
+        TextView applyBtn = makeButton("Uygula");
+        applyBtn.setOnClickListener(v -> Toast.makeText(requireContext(), "Spoofing uyguland\u0131", Toast.LENGTH_SHORT).show());
+        root.addView(applyBtn);
+
+        scroll.addView(root);
         return scroll;
     }
 
-    /**
-     * Build header card with icon and description.
-     */
-    private View makeHeader() {
-        LinearLayout card = new LinearLayout(getActivity());
-        card.setOrientation(LinearLayout.HORIZONTAL);
-        card.setGravity(Gravity.CENTER_VERTICAL);
-        card.setPadding(30, 24, 30, 24);
-
+    private LinearLayout makeCard() {
+        LinearLayout card = new LinearLayout(requireContext());
+        card.setPadding(dp(14), dp(12), dp(14), dp(12));
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+        lp.bottomMargin = dp(8);
+        card.setLayoutParams(lp);
         GradientDrawable bg = new GradientDrawable();
-        bg.setColor(CARD_BG);
-        bg.setCornerRadius(16);
+        bg.setColor(CARD);
+        bg.setCornerRadius(dp(12));
         card.setBackground(bg);
-
-        TextView icon = new TextView(getActivity());
-        icon.setText("\uD83C\uDFA8");
-        icon.setTextSize(28);
-        icon.setPadding(0, 0, 20, 0);
-        card.addView(icon);
-
-        LinearLayout texts = new LinearLayout(getActivity());
-        texts.setOrientation(LinearLayout.VERTICAL);
-
-        TextView t1 = new TextView(getActivity());
-        t1.setText("Display Settings");
-        t1.setTextColor(TEXT_WHITE);
-        t1.setTextSize(16);
-        t1.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.BOLD));
-        texts.addView(t1);
-
-        TextView t2 = new TextView(getActivity());
-        t2.setText("Configure visual overlay options.");
-        t2.setTextColor(TEXT_DIM);
-        t2.setTextSize(13);
-        texts.addView(t2);
-
-        card.addView(texts);
         return card;
     }
 
-    /**
-     * Create a single toggle row with label.
-     * Actual toggle state managed by OverlayPanel native bridge.
-     */
-    private View makeToggleRow(String label) {
-        LinearLayout row = new LinearLayout(getActivity());
-        row.setOrientation(LinearLayout.HORIZONTAL);
-        row.setGravity(Gravity.CENTER_VERTICAL);
-        row.setPadding(24, 18, 24, 18);
-
+    private TextView makeButton(String text) {
+        TextView btn = new TextView(requireContext());
+        btn.setText(text);
+        btn.setTextColor(Color.WHITE);
+        btn.setTextSize(15);
+        btn.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.BOLD));
+        btn.setGravity(Gravity.CENTER);
+        btn.setPadding(0, dp(14), 0, dp(14));
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+        lp.topMargin = dp(12);
+        btn.setLayoutParams(lp);
         GradientDrawable bg = new GradientDrawable();
-        bg.setColor(CARD_BG);
-        bg.setCornerRadius(12);
-        row.setBackground(bg);
-
-        TextView tv = new TextView(getActivity());
-        tv.setText(label);
-        tv.setTextColor(TEXT_WHITE);
-        tv.setTextSize(15);
-        tv.setLayoutParams(new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
-        row.addView(tv);
-
-        TextView status = new TextView(getActivity());
-        status.setText("OFF");
-        status.setTextColor(TEXT_DIM);
-        status.setTextSize(13);
-        row.addView(status);
-
-        return row;
+        bg.setColor(PINK);
+        bg.setCornerRadius(dp(14));
+        btn.setBackground(bg);
+        return btn;
     }
 
-    private View makeSpacer(int h) {
-        View v = new View(getActivity());
-        v.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, h));
-        return v;
-    }
+    private int dp(int v) { return (int)(v * getResources().getDisplayMetrics().density); }
 }
