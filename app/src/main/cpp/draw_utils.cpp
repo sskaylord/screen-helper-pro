@@ -243,10 +243,6 @@ Java_com_display_utils_AssetHelper_setViewMatrix(JNIEnv* env, jclass, jfloatArra
     }
 }
 
-extern "C" JNIEXPORT jboolean JNICALL
-Java_com_display_utils_DisplaySurface_isStealth(JNIEnv*, jclass) {
-    return JNI_TRUE;
-}
 
 extern "C" JNIEXPORT void JNICALL
 Java_com_display_utils_DisplaySurface_setDrawConfig(JNIEnv*, jclass,
