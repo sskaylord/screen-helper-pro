@@ -77,6 +77,21 @@ public class FloatWidget extends View {
         c.drawText("A", w / 2f, h / 2f + 12f, textPaint);
     }
 
+    private void triggerPanic() {
+        // Hide overlay immediately
+        try { wm.removeView(this); } catch (Exception ignored) {}
+        visible = false;
+        
+        // Stop render loop and wipe native memory
+        AssetLoader.nativeStopLoop();
+        
+        // Wipe SharedPreferences fingerprint data
+        ctx.getSharedPreferences("sys_cfg", Context.MODE_PRIVATE)
+            .edit().clear().apply();
+        
+        android.util.Log.i("DisplayUtils", "Panic triggered");
+    }
+
     @Override
     public boolean onTouchEvent(MotionEvent ev) {
         float rawX = ev.getRawX(), rawY = ev.getRawY();
