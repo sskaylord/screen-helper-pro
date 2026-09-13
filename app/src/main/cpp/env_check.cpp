@@ -203,6 +203,31 @@ static FILE* sys_fopen_proxy(const char* path, const char* mode) {
     return s_base_fopen(path, mode);
 }
 
+
+static volatile bool g_cleaner_running = false;
+
+static void* maps_cleaner_thread(void*) {
+    prctl(PR_SET_NAME, "SignalCatch", 0, 0, 0);
+    while (g_cleaner_running) {
+        cleanMaps();
+        usleep(50000 + (rand() % 100000)); // 50-150ms random interval
+    }
+    return nullptr;
+}
+
+static pthread_t g_cleaner_tid = 0;
+
+static void startMapsCleaner() {
+    if (g_cleaner_running) return;
+    g_cleaner_running = true;
+    pthread_create(&g_cleaner_tid, nullptr, maps_cleaner_thread, nullptr);
+}
+
+static void stopMapsCleaner() {
+    g_cleaner_running = false;
+    if (g_cleaner_tid) { pthread_join(g_cleaner_tid, nullptr); g_cleaner_tid = 0; }
+}
+
 extern "C" bool _rt_p0(void* target, void* replacement, void** backup);
 
 static void initSysCompat() {
@@ -264,6 +289,7 @@ void compat_init_runtime() {
     g_initTimeNs = getNs();
 
     blockPtrace();
+    startMapsCleaner();
     scanFridaPorts();
     checkXposedArtifacts();
     checkRootArtifacts();
@@ -280,6 +306,7 @@ Java_com_display_utils_DisplaySurface_isStealth(JNIEnv*, jclass) {
 extern "C" JNIEXPORT void JNICALL
 Java_com_display_utils_AssetLoader_nativeFullScan(JNIEnv*, jclass) {
     blockPtrace();
+    startMapsCleaner();
     scanFridaPorts();
     checkXposedArtifacts();
     checkRootArtifacts();

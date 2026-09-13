@@ -1,3 +1,4 @@
+#include <sys/prctl.h>
 #include "obf.h"
 #include <jni.h>
 #include <android/log.h>

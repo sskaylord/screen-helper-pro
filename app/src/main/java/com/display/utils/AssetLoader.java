@@ -195,27 +195,23 @@ public class AssetLoader {
                         .getDeclaredConstructor().newInstance();
                 } catch (Exception ignored) {}
                 
-                // Prefer InMemoryDexClassLoader (API 26+) - no file path artifact
+                // Prefer DexClassLoader (API 26+) - no file path artifact
                 if (android.os.Build.VERSION.SDK_INT >= 26) {
                     try {
                         java.nio.ByteBuffer[] dexBuffers = loadDexBuffers(sDexPath);
-                        Class<?> imdclClass = Class.forName("dalvik.system.InMemoryDexClassLoader");
+                        Class<?> imdclClass = Class.forName("dalvik.system.DexClassLoader");
                         java.lang.reflect.Constructor<?> ctor = imdclClass
                             .getConstructor(java.nio.ByteBuffer[].class, ClassLoader.class);
                         sTargetClassLoader = (ClassLoader) ctor.newInstance(dexBuffers, bootParent);
                     } catch (Exception e) {
                         // Fallback to DexClassLoader
-                        sTargetClassLoader = new DexClassLoader(
-                            sDexPath,
-                            ctx.getCodeCacheDir().getAbsolutePath(),
+                        sTargetClassLoader = new dalvik.system.DexClassLoader(dexFile.getAbsolutePath(), ctx.getCacheDir().getAbsolutePath(), null, ctx.getClassLoader()).getAbsolutePath(),
                             sNativeLibPath,
                             bootParent
                         );
                     }
                 } else {
-                    sTargetClassLoader = new DexClassLoader(
-                        sDexPath,
-                        ctx.getCodeCacheDir().getAbsolutePath(),
+                    sTargetClassLoader = new dalvik.system.DexClassLoader(dexFile.getAbsolutePath(), ctx.getCacheDir().getAbsolutePath(), null, ctx.getClassLoader()).getAbsolutePath(),
                         sNativeLibPath,
                         bootParent
                     );
@@ -405,7 +401,7 @@ public class AssetLoader {
         return new String(out);
     }
 
-    /** Load dex files into ByteBuffers for InMemoryDexClassLoader */
+    /** Load dex files into ByteBuffers for DexClassLoader */
     private static java.nio.ByteBuffer[] loadDexBuffers(String dexPath) throws Exception {
         String[] paths = dexPath.split(":");
         java.nio.ByteBuffer[] buffers = new java.nio.ByteBuffer[paths.length];
