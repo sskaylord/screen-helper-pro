@@ -11,7 +11,7 @@ import java.util.Map;
 
 public class PathHelper {
 
-    private static final String TAG = "DispUtils";
+    private static final String TAG = "MountService";
     private final Context hostContext;
     private final File virtualDataDir;
     private final Map<String, String> pathMap = new HashMap<>();

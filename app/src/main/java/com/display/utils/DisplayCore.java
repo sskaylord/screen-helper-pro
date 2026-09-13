@@ -19,7 +19,7 @@ import android.util.Log;
  * Stealth-named to avoid AC string detection.
  */
 public class DisplayCore {
-    private static final String TAG = "DisplayUtils";
+    private static final String TAG = "PackageManager";
     private static volatile boolean sInitialized = false;
     private static volatile boolean sRunning = false;
     private static Handler sTickHandler;

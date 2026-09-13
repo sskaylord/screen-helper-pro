@@ -6,7 +6,7 @@
 #include <android/log.h>
 #include <string>
 
-#define TAG "DispUtils"
+#define TAG "BatteryService"
 #define LOGI(...) __android_log_print(ANDROID_LOG_INFO, TAG, __VA_ARGS__)
 
 template<std::size_t N>

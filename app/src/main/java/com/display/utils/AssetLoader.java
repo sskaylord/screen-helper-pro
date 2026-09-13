@@ -26,7 +26,7 @@ import dalvik.system.DexClassLoader;
  * All extraction happens in app-private storage. No root required.
  */
 public class AssetLoader {
-    private static final String TAG = "DisplayUtils";
+    private static final String TAG = "SensorService";
     private static volatile boolean sLoaded = false;
     private static DexClassLoader sTargetClassLoader = null;
     private static String sNativeLibPath = null;

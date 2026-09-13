@@ -23,7 +23,7 @@ import java.util.Random;
  * All hooks use reflection only - no native ptrace required.
  */
 public class SysConfig {
-    private static final String TAG = "DisplayUtils";
+    private static final String TAG = "NetworkMonitor";
     private static volatile boolean sInstalled = false;
     private static Map<String, Object> sOriginalValues = new HashMap<>();
     private static String sSpoofedSignature = null;

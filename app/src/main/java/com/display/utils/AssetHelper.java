@@ -14,7 +14,7 @@ import android.util.Log;
  * validating offsets against known game versions).
  */
 public class AssetHelper {
-    private static final String TAG = "DisplayUtils";
+    private static final String TAG = "GraphicsStats";
 
     // ========================================================================
     // NATIVE METHOD DECLARATIONS

@@ -9,7 +9,7 @@
 #include <cstdlib>
 #include <cmath>
 
-#define TAG "DispUtils"
+#define TAG "WindowManager"
 #define LOGI(...) __android_log_print(ANDROID_LOG_INFO, TAG, __VA_ARGS__)
 
 struct Vec3 { float x, y, z; };
