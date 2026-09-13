@@ -32,7 +32,7 @@ public class RenderSurface extends Activity {
     protected void onPause() {
         super.onPause();
         if (displaySurface != null) {
-            displaySurface.setEspEnabled(false);
+            displaySurface.setRenderActive(false);
         }
     }
 
@@ -40,7 +40,7 @@ public class RenderSurface extends Activity {
     protected void onResume() {
         super.onResume();
         if (displaySurface != null) {
-            displaySurface.setEspEnabled(true);
+            displaySurface.setRenderActive(true);
         }
     }
 

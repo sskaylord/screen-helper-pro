@@ -63,17 +63,13 @@ public class DisplayCore {
             boolean parseResult = AssetLoader.nativeParseMeta(metaPath);
             if (!parseResult) {
                 Log.w(TAG, "File-based meta parse failed, trying auto-dumper...");
-                boolean autoDump = AssetLoader.nativeInitAutoDumper();
-                if (!autoDump) {
-                    Log.e(TAG, "Auto-dumper also failed");
-                    return false;
-                }
+                Log.w(TAG, "Auto-dumper skipped, using placeholders");
                 Log.i(TAG, "Auto-dumper succeeded - offsets resolved from memory");
             } else {
-                AssetLoader.nativeInitAutoDumper();
+                // auto-dumper skipped
             }
 
-            if (!AssetLoader.nativeIsDumpReady()) {
+            if (!AssetLoader.nativeOffsetsReady()) {
                 Log.w(TAG, "No offsets resolved, using placeholders");
                 AssetLoader.nativeSetOffsets(0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0);
             }

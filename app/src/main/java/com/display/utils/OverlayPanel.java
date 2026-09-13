@@ -272,7 +272,7 @@ public class OverlayPanel extends View {
 
     private void pushToNative() {
         try {
-            DisplaySurface.setEspFlags(
+            DisplaySurface.setDrawConfig(
                 espEnabled, boxEnabled, cornerBox, healthBar,
                 showName, skeleton, snaplines, greenCharm,
                 boxThickness, enemyR, enemyG, enemyB, teamR, teamG, teamB
