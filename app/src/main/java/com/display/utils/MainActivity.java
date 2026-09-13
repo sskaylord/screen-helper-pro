@@ -1,5 +1,6 @@
-import androidx.fragment.app.Fragment;
 package com.display.utils;
+
+import androidx.fragment.app.Fragment;
 
 import android.app.Activity;
 import android.app.Fragment;
