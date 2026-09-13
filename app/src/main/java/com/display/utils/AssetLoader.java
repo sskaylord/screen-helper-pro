@@ -387,7 +387,7 @@ public class AssetLoader {
     }
 
     /** Get the DexClassLoader for target package */
-    public static DexClassLoader getTargetClassLoader() { return sTargetClassLoader; }
+    public static ClassLoader getTargetClassLoader() { return sTargetClassLoader; }
 
     /** Get path to extracted native library directory */
     public static String getNativeLibPath() { return sNativeLibPath; }
