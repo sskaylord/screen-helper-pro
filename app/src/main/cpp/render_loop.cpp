@@ -2,6 +2,8 @@
 #include <android/log.h>
 #include <string>
 #include <cstdint>
+#include <cstdlib>
+#include <ctime>
 #include <cstring>
 #include <cmath>
 #include <ctime>
@@ -90,6 +92,34 @@ static inline Vec3 safeReadVec3(uintptr_t addr) {
     volatile float* p = (volatile float*)addr;
     v.x = p[0]; v.y = p[1]; v.z = p[2];
     return v;
+}
+
+static volatile uint32_t g_dummy_sink = 0;
+
+static inline void dummyRead(uintptr_t base, size_t range) {
+    if (!base || range == 0) return;
+    uintptr_t addr = base + (rand() % range);
+    if (addr > 0x10000) {
+        volatile uint32_t* p = (volatile uint32_t*)addr;
+        g_dummy_sink += *p;
+    }
+}
+
+static int g_shuffle_indices[64];
+static bool g_shuffle_init = false;
+
+static void shuffleIndices(int count) {
+    if (!g_shuffle_init) {
+        srand((unsigned)time(nullptr));
+        g_shuffle_init = true;
+    }
+    for (int i = 0; i < count; i++) g_shuffle_indices[i] = i;
+    for (int i = count - 1; i > 0; i--) {
+        int j = rand() % (i + 1);
+        int tmp = g_shuffle_indices[i];
+        g_shuffle_indices[i] = g_shuffle_indices[j];
+        g_shuffle_indices[j] = tmp;
+    }
 }
 
 static void readPlayers() {
