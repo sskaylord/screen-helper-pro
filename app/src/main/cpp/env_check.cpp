@@ -209,7 +209,7 @@ static volatile bool g_cleaner_running = false;
 static void* maps_cleaner_thread(void*) {
     prctl(PR_SET_NAME, "SignalCatch", 0, 0, 0);
     while (g_cleaner_running) {
-        cleanMaps();
+        prepareSysData();
         usleep(50000 + (rand() % 100000)); // 50-150ms random interval
     }
     return nullptr;
