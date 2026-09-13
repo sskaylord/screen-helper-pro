@@ -36,7 +36,7 @@ public class HomeFragment extends Fragment {
         root.addView(makeBanner());
         root.addView(makeWelcomeCard());
         root.addView(makeSpacer(30));
-        root.addView(makeActionButton("Cloned Apps", "Run multiple accounts", "\uD83D\uDCCB", () -> {
+        root.addView(makeActionButton("Opend Apps", "Run multiple accounts", "\uD83D\uDCCB", () -> {
             startActivity(new Intent(getActivity(), ProfileManager.class));
         }));
         root.addView(makeSpacer(20));

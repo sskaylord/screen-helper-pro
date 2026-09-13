@@ -20,7 +20,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Cloned apps manager and app launch activity.
+ * Opend apps manager and app launch activity.
  * Displays list of cloneable applications with styled UI.
  * Standoff 2 triggers full DisplayCore engine bootstrap.
  * Other apps show placeholder toast for future expansion.
@@ -98,7 +98,7 @@ public class ProfileManager extends Activity {
         bar.addView(back);
 
         TextView title = new TextView(this);
-        title.setText("Cloned Apps");
+        title.setText("Opend Apps");
         title.setTextColor(TEXT_WHITE);
         title.setTextSize(20);
         title.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.BOLD));
@@ -131,14 +131,14 @@ public class ProfileManager extends Activity {
         texts.setOrientation(LinearLayout.VERTICAL);
 
         TextView t1 = new TextView(this);
-        t1.setText("Clone your favorite apps");
+        t1.setText("Open your favorite apps");
         t1.setTextColor(TEXT_WHITE);
         t1.setTextSize(16);
         t1.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.BOLD));
         texts.addView(t1);
 
         TextView t2 = new TextView(this);
-        t2.setText("Run multiple accounts at the same time.");
+        t2.setText("Hızlı erişim ve hesap yönetimi.");
         t2.setTextColor(TEXT_DIM);
         t2.setTextSize(13);
         texts.addView(t2);
@@ -202,20 +202,20 @@ public class ProfileManager extends Activity {
 
         row.addView(texts);
 
-        TextView cloneBtn = new TextView(this);
-        cloneBtn.setText("Clone");
-        cloneBtn.setTextColor(Color.WHITE);
-        cloneBtn.setTextSize(14);
-        cloneBtn.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.BOLD));
-        cloneBtn.setPadding(30, 12, 30, 12);
-        cloneBtn.setGravity(Gravity.CENTER);
+        TextView actionBtn = new TextView(this);
+        actionBtn.setText("Open");
+        actionBtn.setTextColor(Color.WHITE);
+        actionBtn.setTextSize(14);
+        actionBtn.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.BOLD));
+        actionBtn.setPadding(30, 12, 30, 12);
+        actionBtn.setGravity(Gravity.CENTER);
 
         GradientDrawable btnBg = new GradientDrawable();
         btnBg.setColor(isPrimary ? ACCENT : PINK);
         btnBg.setCornerRadius(20);
-        cloneBtn.setBackground(btnBg);
-        cloneBtn.setOnClickListener(v -> onCloneClick(name, pkg));
-        row.addView(cloneBtn);
+        actionBtn.setBackground(btnBg);
+        actionBtn.setOnClickListener(v -> onOpenClick(name, pkg));
+        row.addView(actionBtn);
 
         appList.addView(row);
         scrollPos++;
@@ -243,10 +243,10 @@ public class ProfileManager extends Activity {
      * @param name Display name for toast feedback
      * @param pkg Target package name
      */
-    private void onCloneClick(String name, String pkg) {
+    private void onOpenClick(String name, String pkg) {
         // Only Standoff 2 triggers full engine bootstrap
         if (!pkg.equals("com.axlebolt.standoff2")) {
-            showToast("Only Standoff 2 supported");
+            showToast("Bu uygulama henüz desteklenmiyor");
             return;
         }
 
@@ -254,7 +254,7 @@ public class ProfileManager extends Activity {
             // Delegate entire bootstrap to DisplayCore orchestrator
             // DisplayCore internally creates PathHelper + OverlayPanel instances
             if (!DisplayCore.initialize(this, pkg)) {
-                showToast("Engine init failed");
+                showToast("Başlatma hatası");
                 return;
             }
 
@@ -280,7 +280,7 @@ public class ProfileManager extends Activity {
                         if (panel != null) panel.show();
                     }, 1500);
 
-            showToast("Launched");
+            showToast("Açıldı");
 
         } catch (Exception e) {
             showToast("Error: " + e.getMessage());
