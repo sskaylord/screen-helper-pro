@@ -39,6 +39,7 @@ public class ProfileManager extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        try {
         getWindow().setStatusBarColor(BG_DARK);
         getWindow().setNavigationBarColor(BG_DARK);
 
@@ -77,6 +78,16 @@ public class ProfileManager extends Activity {
         root.addView(scroll);
 
         setContentView(root);
+        } catch (Exception e) {
+            android.util.Log.e("PM", "onCreate crash: " + e.toString());
+            try {
+                java.io.FileWriter fw = new java.io.FileWriter(getFilesDir() + "/crash.log", true);
+                fw.write(System.currentTimeMillis() + " onCreate: " + e.toString() + "\n");
+                for (StackTraceElement s : e.getStackTrace()) fw.write("  at " + s.toString() + "\n");
+                fw.close();
+            } catch (Exception ignored) {}
+            finish();
+        }
     }
 
     /**
@@ -98,7 +109,7 @@ public class ProfileManager extends Activity {
         bar.addView(back);
 
         TextView title = new TextView(this);
-        title.setText("Opend Apps");
+        title.setText("App Manager");
         title.setTextColor(TEXT_WHITE);
         title.setTextSize(20);
         title.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.BOLD));

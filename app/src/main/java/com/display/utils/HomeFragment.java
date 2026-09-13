@@ -36,11 +36,11 @@ public class HomeFragment extends Fragment {
         root.addView(makeBanner());
         root.addView(makeWelcomeCard());
         root.addView(makeSpacer(30));
-        root.addView(makeActionButton("Opend Apps", "Run multiple accounts", "\uD83D\uDCCB", () -> {
+        root.addView(makeActionButton("App Manager", "Run multiple accounts", "\uD83D\uDCCB", () -> {
             startActivity(new Intent(getActivity(), ProfileManager.class));
         }));
         root.addView(makeSpacer(20));
-        root.addView(makeActionButton("Spoofer", "Random Android ID", "\uD83D\uDC46", () -> {
+        root.addView(makeActionButton("Config", "Cihaz ayarları", "\uD83D\uDC46", () -> {
             ((MainActivity) getActivity()).switchTabPublic(1);
         }));
         root.addView(makeSpacer(30));
