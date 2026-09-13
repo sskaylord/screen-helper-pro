@@ -87,9 +87,9 @@ public class ProfileManager extends Activity {
     private void launchApp(String pkg) throws Exception {
         log("launchApp: "+pkg);
         CompatLoader.loadGms(this);
-        VActivityManager.get().init(getApplicationContext());
-        VActivityManager.get().installApp(pkg);
-        runOnUiThread(() -> VActivityManager.get().launchApp(pkg));
+        VCore.get().init(getApplicationContext());
+        VCore.get().installApp(pkg);
+        runOnUiThread(() -> VCore.get().launchApp(pkg));
     }
 
     private void launchGame(String pkg) throws Exception {

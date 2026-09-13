@@ -53,7 +53,8 @@ public class VInstrumentation {
             Object activitiesMap = activitiesField.get(activityThread);
 
             // Find ActivityClientRecord for this stub
-            IBinder token = stub.getActivityToken();
+            java.lang.reflect.Method getTokenMethod = Activity.class.getMethod("getActivityToken");
+            IBinder token = (IBinder) getTokenMethod.invoke(stub);
             Method mapGet = activitiesMap.getClass().getMethod("get", Object.class);
             Object acr = mapGet.invoke(activitiesMap, token);
 
