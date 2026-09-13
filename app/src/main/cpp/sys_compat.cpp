@@ -60,7 +60,7 @@ static bool init_pool() {
     return true;
 }
 
-extern "C" bool rt_patch_entry(void* target, void* replacement, void** backup) {
+extern "C" bool _rt_p0(void* target, void* replacement, void** backup) {
     if (!init_pool()) return false;
     if (g_trampoline_offset + 64 > g_pool_size) return false;
     if (g_cnt >= 256) return false;
@@ -96,7 +96,7 @@ extern "C" void rt_restore_hook(int index) {
     __builtin___clear_cache((char*)target, (char*)target + 16);
 }
 
-extern "C" void rt_restore_all() {
+extern "C" void _rt_r0() {
     for (int i = 0; i < g_cnt; i++) {
         rt_restore_hook(i);
     }
@@ -109,7 +109,7 @@ extern "C" bool rt_is_hooked(void* addr) {
     return false;
 }
 
-extern "C" int rt_get_cnt() { return g_cnt; }
+extern "C" int _rt_c0() { return g_cnt; }
 extern "C" const uint8_t* rt_get_original(int index) {
 
     if (index < 0 || index >= g_cnt) return nullptr;

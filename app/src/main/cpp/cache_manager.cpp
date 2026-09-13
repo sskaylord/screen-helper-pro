@@ -3,11 +3,40 @@
 #include <cstring>
 #include <sys/uio.h>
 #include <unistd.h>
+#include <fcntl.h>
+#include <cstdlib>
+#include <ctime>
+
+// Stealth memory read - /proc/pid/mem with scatter pattern
+static int s_mem_fd = -1;
+static pid_t s_cached_pid = 0;
 
 ssize_t safe_read_mem(pid_t pid, uintptr_t addr, void* buf, size_t len) {
-    struct iovec local  = { buf, len };
-    struct iovec remote = { (void*)addr, len };
-    return process_vm_readv(pid, &local, 1, &remote, 1, 0);
+    // Open /proc/pid/mem lazily, cache fd
+    if (s_mem_fd < 0 || s_cached_pid != pid) {
+        if (s_mem_fd >= 0) close(s_mem_fd);
+        char path[64];
+        __builtin_snprintf(path, sizeof(path), "/proc/%d/mem", pid);
+        s_mem_fd = open(path, O_RDONLY);
+        s_cached_pid = pid;
+        if (s_mem_fd < 0) return -1;
+    }
+    
+    // Scatter read with small chunks + jitter to avoid pattern detection
+    ssize_t total = 0;
+    size_t chunk_max = 256;
+    while ((size_t)total < len) {
+        size_t remaining = len - total;
+        size_t chunk = remaining < chunk_max ? remaining : (chunk_max - (rand() % 64));
+        off_t offset = addr + total;
+        ssize_t rd = pread(s_mem_fd, (char*)buf + total, chunk, offset);
+        if (rd <= 0) break;
+        total += rd;
+        // Micro-jitter between chunks
+        struct timespec ts = {0, (long)(rand() % 50000)};
+        nanosleep(&ts, nullptr);
+    }
+    return total;
 }
 
 struct PlayerCache {

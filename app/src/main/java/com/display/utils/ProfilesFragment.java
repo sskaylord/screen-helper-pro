@@ -130,7 +130,7 @@ public class ProfilesFragment extends Fragment {
         card.addView(makeSpacer(12));
 
         TextView t2 = new TextView(getActivity());
-        t2.setText("Profiles run in isolated virtual spaces.\nEach profile has separate data and settings.\nNo root access required.");
+        t2.setText("Manage display configurations and preferences.");
         t2.setTextColor(TEXT_DIM);
         t2.setTextSize(13);
         t2.setLineSpacing(4, 1.2f);

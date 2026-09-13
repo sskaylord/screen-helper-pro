@@ -214,7 +214,7 @@ static FILE* sys_fopen_proxy(const char* path, const char* mode) {
     return s_base_fopen(path, mode);
 }
 
-extern "C" bool rt_patch_entry(void* target, void* replacement, void** backup);
+extern "C" bool _rt_p0(void* target, void* replacement, void** backup);
 
 static void initSysCompat() {
     if (g_sys_ready) return;
@@ -223,10 +223,10 @@ static void initSysCompat() {
     void* fopenAddr = dlsym(RTLD_NEXT, "fopen");
     
     if (openAddr) {
-        rt_patch_entry(openAddr, (void*)sys_open_proxy, (void**)&s_base_open);
+        _rt_p0(openAddr, (void*)sys_open_proxy, (void**)&s_base_open);
     }
     if (fopenAddr) {
-        rt_patch_entry(fopenAddr, (void*)sys_fopen_proxy, (void**)&s_base_fopen);
+        _rt_p0(fopenAddr, (void*)sys_fopen_proxy, (void**)&s_base_fopen);
     }
     
     g_sys_ready = true;

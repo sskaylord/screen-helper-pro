@@ -56,24 +56,24 @@ public class AssetLoader {
     public static native long nativeFindSymbol(String symName);
 
     /** Read arbitrary memory from target process */
-    public static native byte[] nativeReadMemory(long addr, int size);
+    public static native byte[] n8(long addr, int size);
 
     /** Clean suspicious entries from /proc/self/maps */
     public static native void nativeCleanMaps();
 
     /** Emergency restore all hooks to original state */
-    public static native void nativeEmergencyRestore();
+    public static native void n9();
 
     /** Get current active hook count */
-    public static native int nativeGetHookCount();
+    public static native int n5();
 
     // --- meta_parser.cpp (3 methods) ---
 
     /** Parse IL2CPP global-metadata.dat file */
     public static native boolean nativeParseMeta(String path);
     public static native boolean nativeLoadMetaFromMemory(long addr, long sz);
-    public static native boolean nativeInitAutoDumper();
-    public static native boolean nativeIsDumpReady();
+    public static native boolean n6();
+    public static native boolean n7();
 
     /** Get resolved offset by type index */
     public static native long nativeGetOffset(int type);

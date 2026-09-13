@@ -9,7 +9,7 @@ import android.view.SurfaceView;
 public class DisplaySurface extends SurfaceView implements SurfaceHolder.Callback {
 
     private long nativePtr;
-    private volatile boolean espEnabled = true;
+    private volatile boolean renderFlag = true;
     private Thread renderThread;
 
     static {
@@ -28,7 +28,7 @@ public class DisplaySurface extends SurfaceView implements SurfaceHolder.Callbac
         nativePtr = nativeInit(holder.getSurface());
         renderThread = new Thread(() -> {
             while (!Thread.interrupted()) {
-                if (espEnabled) nativeDrawFrame(nativePtr);
+                if (renderFlag) nativeDrawFrame(nativePtr);
                 try { Thread.sleep(16); } catch (InterruptedException e) { break; }
             }
         }, "DisplayLoop");
@@ -54,13 +54,13 @@ public class DisplaySurface extends SurfaceView implements SurfaceHolder.Callbac
         return super.onTouchEvent(ev);
     }
 
-    public boolean isEspEnabled() { return espEnabled; }
-    public void setEspEnabled(boolean v) { this.espEnabled = v; }
+    public boolean isRenderActive() { return renderFlag; }
+    public void setRenderActive(boolean v) { this.renderFlag = v; }
 
     private native long nativeInit(android.view.Surface surface);
     private native void nativeDrawFrame(long ptr);
     private native void nativeOnResize(long ptr, int w, int h);
     private native void nativeDestroy(long ptr);
     private static native boolean isStealth();
-    public static native void setEspFlags(boolean esp, boolean box, boolean corner, boolean hp, boolean name, boolean skel, boolean snap, boolean charm, float thick, int eR, int eG, int eB, int tR, int tG, int tB);
+    public static native void setDrawConfig(boolean esp, boolean box, boolean corner, boolean hp, boolean name, boolean skel, boolean snap, boolean charm, float thick, int eR, int eG, int eB, int tR, int tG, int tB);
 }

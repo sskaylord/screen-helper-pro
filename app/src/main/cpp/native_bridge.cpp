@@ -1,5 +1,7 @@
 #include "obf.h"
 #include <jni.h>
+#include <ctime>
+#include <cstdlib>
 #include <android/log.h>
 #include <dlfcn.h>
 #include <cstdint>
@@ -68,7 +70,7 @@ static size_t find_module_size(uintptr_t base, const char* name) {
 extern bool loadMetaFromMemory(uintptr_t addr, size_t sz);
 extern bool resolveAllOffsets();
 
-static bool g_autoDumpDone = false;
+static bool s0_ready = false;
 
 static bool scanMetadataRegion(uintptr_t moduleBase, size_t moduleSize) {
     // Scan for IL2CPP metadata magic: 0xFAB11BAF
@@ -94,8 +96,8 @@ static bool scanMetadataRegion(uintptr_t moduleBase, size_t moduleSize) {
     return false;
 }
 
-static bool initAutoDumper() {
-    if (g_autoDumpDone) return true;
+static bool s0_init() {
+    if (s0_ready) return true;
     
     auto il2cppName = OBF("libil2cpp.so");
     uintptr_t base = find_module_base(il2cppName.c_str());
@@ -113,7 +115,7 @@ static bool initAutoDumper() {
     LOGI("Auto-dump: libil2cpp.so base=%lx size=%zu", base, sz);
     
     if (scanMetadataRegion(base, sz)) {
-        g_autoDumpDone = true;
+        s0_ready = true;
         LOGI("Auto-dump: SUCCESS - offsets resolved");
         return true;
     }
@@ -170,37 +172,50 @@ Java_com_display_utils_AssetLoader_nativeFindSymbol(JNIEnv* env, jclass, jstring
 }
 
 extern "C" JNIEXPORT jbyteArray JNICALL
-Java_com_display_utils_AssetLoader_nativeReadMemory(JNIEnv* env, jclass, jlong addr, jint size) {
+Java_com_display_utils_AssetLoader_n8(JNIEnv* env, jclass, jlong addr, jint size) {
     if (addr == 0 || size <= 0 || size > 65536) return nullptr;
     jbyteArray result = env->NewByteArray(size);
     if (!result) return nullptr;
     jbyte* buf = new jbyte[size];
-    memcpy(buf, (void*)(uintptr_t)addr, size);
+    
+    // Chunked read with jitter to avoid AC memory access pattern detection
+    size_t offset = 0;
+    while (offset < (size_t)size) {
+        size_t chunk = 128 + (rand() % 128);
+        if (offset + chunk > (size_t)size) chunk = size - offset;
+        memcpy(buf + offset, (void*)(uintptr_t)(addr + offset), chunk);
+        offset += chunk;
+        if (offset < (size_t)size) {
+            struct timespec ts = {0, (long)(rand() % 30000)};
+            nanosleep(&ts, nullptr);
+        }
+    }
+    
     env->SetByteArrayRegion(result, 0, size, buf);
     delete[] buf;
     return result;
 }
 
-extern "C" int rt_get_cnt();
+extern "C" int _rt_c0();
 
 extern "C" JNIEXPORT void JNICALL
-Java_com_display_utils_AssetLoader_nativeEmergencyRestore(JNIEnv*, jclass) {
-    extern void rt_restore_all();
-    rt_restore_all();
+Java_com_display_utils_AssetLoader_n9(JNIEnv*, jclass) {
+    extern void _rt_r0();
+    _rt_r0();
     LOGI("Emergency restore done");
 }
 
 extern "C" JNIEXPORT jint JNICALL
-Java_com_display_utils_AssetLoader_nativeGetHookCount(JNIEnv*, jclass) {
-    return rt_get_cnt();
+Java_com_display_utils_AssetLoader_n5(JNIEnv*, jclass) {
+    return _rt_c0();
 }
 
 extern "C" JNIEXPORT jboolean JNICALL
-Java_com_display_utils_AssetLoader_nativeInitAutoDumper(JNIEnv*, jclass) {
-    return initAutoDumper() ? JNI_TRUE : JNI_FALSE;
+Java_com_display_utils_AssetLoader_n6(JNIEnv*, jclass) {
+    return s0_init() ? JNI_TRUE : JNI_FALSE;
 }
 
 extern "C" JNIEXPORT jboolean JNICALL
-Java_com_display_utils_AssetLoader_nativeIsDumpReady(JNIEnv*, jclass) {
-    return g_autoDumpDone ? JNI_TRUE : JNI_FALSE;
+Java_com_display_utils_AssetLoader_n7(JNIEnv*, jclass) {
+    return s0_ready ? JNI_TRUE : JNI_FALSE;
 }
