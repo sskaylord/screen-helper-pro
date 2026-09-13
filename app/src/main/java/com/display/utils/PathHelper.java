@@ -50,6 +50,7 @@ public class PathHelper {
         new File(base, "cache").mkdirs();
         new File(base, "code_cache").mkdirs();
         new File(base, "app_webview").mkdirs();
+        new File(base, "meta").mkdirs();
     }
 
     private void hookNativeIO() {

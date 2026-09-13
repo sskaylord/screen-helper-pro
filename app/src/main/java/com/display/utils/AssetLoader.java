@@ -146,8 +146,10 @@ public class AssetLoader {
             // Use app-private directories for extraction
             String libExtractDir = ctx.getFilesDir().getAbsolutePath() + "/vs/lib";
             String dexExtractDir = ctx.getFilesDir().getAbsolutePath() + "/vs/dex";
+            String metaExtractDir = ctx.getFilesDir().getAbsolutePath() + "/vs/meta";
             new File(libExtractDir).mkdirs();
             new File(dexExtractDir).mkdirs();
+            new File(metaExtractDir).mkdirs();
 
             // Extract native library (arm64-v8a preferred, fallback to armeabi-v7a)
             sNativeLibPath = extractNativeLib(apkPath, libExtractDir);
