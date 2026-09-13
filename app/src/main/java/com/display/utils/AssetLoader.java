@@ -71,6 +71,7 @@ public class AssetLoader {
 
     /** Parse IL2CPP global-metadata.dat file */
     public static native boolean nativeParseMeta(String path);
+    public static native boolean nativeLoadMetaFromMemory(long addr, long sz);
 
     /** Get resolved offset by type index */
     public static native long nativeGetOffset(int type);

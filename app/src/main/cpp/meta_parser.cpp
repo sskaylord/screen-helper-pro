@@ -126,6 +126,28 @@ static bool loadMetaFile(const char* path) {
     return true;
 }
 
+static bool loadMetaFromMemory(uintptr_t addr, size_t sz) {
+    if (!addr || sz <= 0 || sz > 64 * 1024 * 1024) return false;
+    
+    g_metaData = new uint8_t[sz];
+    if (!g_metaData) return false;
+    
+    memcpy(g_metaData, (const void*)addr, sz);
+    g_metaSize = sz;
+    memcpy(&g_header, g_metaData, sizeof(MetaHeader));
+    
+    if (g_header.magic != 0xFAB11BAF) {
+        delete[] g_metaData;
+        g_metaData = nullptr;
+        return false;
+    }
+    
+    LOGI("Meta loaded from memory v%d size=%zu", g_header.version, g_metaSize);
+    return true;
+}
+
+
+
 static uint32_t findTypeByName(const char* target) {
     if (!g_metaData) return UINT32_MAX;
     uint32_t targetHash = hashName(target);
@@ -293,3 +315,11 @@ static bool tryXorDecrypt(uint8_t* data, size_t sz) {
     return false;
 }
 
+
+extern "C" JNIEXPORT jboolean JNICALL
+Java_com_display_utils_AssetLoader_nativeLoadMetaFromMemory(JNIEnv*, jclass, jlong addr, jlong sz) {
+    if (loadMetaFromMemory((uintptr_t)addr, (size_t)sz)) {
+        return resolveAllOffsets() ? JNI_TRUE : JNI_FALSE;
+    }
+    return JNI_FALSE;
+}
