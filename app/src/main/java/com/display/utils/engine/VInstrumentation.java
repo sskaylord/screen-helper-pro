@@ -1,15 +1,15 @@
 package com.display.utils.engine;
 
 import android.app.Activity;
-import android.app.Application;
 import android.app.Instrumentation;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
-import android.os.Bundle;
+import android.content.pm.ApplicationInfo;
 import android.os.IBinder;
 import android.util.Log;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.util.Map;
 
 public class VInstrumentation {
     private static final String TAG = "VI";
@@ -21,34 +21,62 @@ public class VInstrumentation {
     public void launch(Activity stub, Intent realIntent, ActivityInfo ti,
                        VActivityManager.SandboxRecord rec, int slot) {
         ensureHooked();
-        String cls = realIntent.getComponent() != null ? realIntent.getComponent().getClassName() : ti.name;
+        String cls = realIntent.getComponent() != null ?
+            realIntent.getComponent().getClassName() : ti.name;
         Log.i(TAG, "Launching " + cls + " in stub[" + slot + "]");
+
         try {
             ClassLoader tcl = VClassLoader.getCL();
-            if (tcl == null) { stub.finish(); return; }
-            Class<?> rc = tcl.loadClass(cls);
-            Class<?> at = Class.forName("android.app.ActivityThread");
-            Object thread = at.getMethod("currentActivityThread").invoke(null);
-            Field af = at.getDeclaredField("mActivities"); af.setAccessible(true);
-            Object map = af.get(thread);
-            IBinder token = (IBinder) Activity.class.getMethod("getActivityToken").invoke(stub);
-            Object acr = map.getClass().getMethod("get", Object.class).invoke(map, token);
-            if (acr == null) { stub.finish(); return; }
-            Field actF = acr.getClass().getDeclaredField("activity"); actF.setAccessible(true);
-            Instrumentation instr = (Instrumentation) at.getDeclaredField("mInstrumentation").get(thread);
-            // Use reflection to get the field value properly
-            Field instrF = at.getDeclaredField("mInstrumentation"); instrF.setAccessible(true);
-            instr = (Instrumentation) instrF.get(thread);
-            Activity real = instr.newActivity(tcl, cls, realIntent);
-            if (real == null) { stub.finish(); return; }
-            actF.set(acr, real);
-            Method oc = Activity.class.getDeclaredMethod("onCreate", Bundle.class);
-            oc.setAccessible(true); oc.invoke(real, (Bundle)null);
-            Method os = Activity.class.getDeclaredMethod("onStart");
-            os.setAccessible(true); os.invoke(real);
-            Method or = Activity.class.getDeclaredMethod("onResume");
-            or.setAccessible(true); or.invoke(real);
-            Log.i(TAG, "OK: " + cls);
+            if (tcl == null) { Log.e(TAG, "No CL"); stub.finish(); return; }
+
+            // ActivityThread al
+            Class<?> atClass = Class.forName("android.app.ActivityThread");
+            Method curAT = atClass.getDeclaredMethod("currentActivityThread");
+            curAT.setAccessible(true);
+            Object at = curAT.invoke(null);
+
+            // mActivities map
+            Field mActField = atClass.getDeclaredField("mActivities");
+            mActField.setAccessible(true);
+            @SuppressWarnings("unchecked")
+            Map<IBinder, Object> mActivities = (Map<IBinder, Object>) mActField.get(at);
+
+            // Stub token al (hidden field)
+            Field tokenField = Activity.class.getDeclaredField("mToken");
+            tokenField.setAccessible(true);
+            IBinder token = (IBinder) tokenField.get(stub);
+
+            Object acr = mActivities.get(token);
+            if (acr == null) {
+                Log.e(TAG, "ACR not found for token");
+                stub.finish();
+                return;
+            }
+
+            Class<?> acrClass = acr.getClass();
+
+            // Intent override
+            Field intentField = acrClass.getDeclaredField("intent");
+            intentField.setAccessible(true);
+            intentField.set(acr, realIntent);
+
+            // ActivityInfo override
+            Field aiField = acrClass.getDeclaredField("activityInfo");
+            aiField.setAccessible(true);
+            ActivityInfo ai = new ActivityInfo();
+            ai.name = cls;
+            ai.packageName = rec.packageName;
+            ai.applicationInfo = new ApplicationInfo(rec.appInfo);
+            ai.applicationInfo.dataDir = rec.dataDir;
+            ai.applicationInfo.nativeLibraryDir = rec.libDir;
+            aiField.set(acr, ai);
+
+            // Instrumentation zaten VIW ile replace edildi (ensureHooked)
+            // Sistem şimdi performLaunchActivity çağırdığında
+            // VIW.newActivity() target CL'den yükleyecek
+
+            Log.i(TAG, "ACR patched OK: " + cls);
+
         } catch (Exception e) {
             Log.e(TAG, "FAIL: " + e);
             e.printStackTrace();
@@ -59,12 +87,22 @@ public class VInstrumentation {
     private void ensureHooked() {
         if (hooked) return;
         try {
-            Class<?> at = Class.forName("android.app.ActivityThread");
-            Object thread = at.getMethod("currentActivityThread").invoke(null);
-            Field f = at.getDeclaredField("mInstrumentation"); f.setAccessible(true);
-            Instrumentation orig = (Instrumentation) f.get(thread);
-            f.set(thread, new VIW(orig));
+            Class<?> atClass = Class.forName("android.app.ActivityThread");
+            Method curAT = atClass.getDeclaredMethod("currentActivityThread");
+            curAT.setAccessible(true);
+            Object at = curAT.invoke(null);
+
+            Field instrField = atClass.getDeclaredField("mInstrumentation");
+            instrField.setAccessible(true);
+            Instrumentation orig = (Instrumentation) instrField.get(at);
+
+            if (!(orig instanceof VIW)) {
+                instrField.set(at, new VIW(orig));
+            }
             hooked = true;
-        } catch (Exception e) { Log.e(TAG, "Hook fail: " + e); }
+            Log.i(TAG, "Instrumentation hooked with VIW");
+        } catch (Exception e) {
+            Log.e(TAG, "Hook fail: " + e);
+        }
     }
 }
