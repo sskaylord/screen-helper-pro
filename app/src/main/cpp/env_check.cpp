@@ -61,10 +61,10 @@ static bool arm64_hook(void* target, void* hook, void** orig_out) {
         uint8_t jmp[16] = { 0x50,0x00,0x00,0x58, 0x00,0x02,0x1F,0xD6, 0,0,0,0,0,0,0,0 };
         uint64_t next = tgt + 16; *(uint64_t*)(jmp+8) = next;
         memcpy(os+16, jmp, 16);
-        __builtin___clear_cache(os, os+32); *orig_out = os;
+        __builtin___clear_cache((char*)os, (char*)(os+32)); *orig_out = os;
     }
     memcpy((void*)tgt, tramp, 16);
-    __builtin___clear_cache((char*)tgt, (char*)tgt+16);
+    __builtin___clear_cache((char*)tgt, (char*)(tgt+16));
     return true;
 }
 
