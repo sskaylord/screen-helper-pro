@@ -17,15 +17,18 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v2
-        with:
-          cmdline-tools-version: 'latest'
-
-      - name: Install NDK + CMake
+      - name: Setup Android SDK manually
         run: |
+          export ANDROID_HOME=$HOME/android-sdk
+          mkdir -p $ANDROID_HOME/cmdline-tools
+          curl -sL https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -o /tmp/cmdtools.zip
+          unzip -q /tmp/cmdtools.zip -d $ANDROID_HOME/cmdline-tools
+          mv $ANDROID_HOME/cmdline-tools/cmdline-tools $ANDROID_HOME/cmdline-tools/latest
+          export PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$PATH
+          echo "ANDROID_HOME=$ANDROID_HOME" >> $GITHUB_ENV
+          echo "PATH=$PATH" >> $GITHUB_ENV
           yes | sdkmanager --licenses > /dev/null 2>&1 || true
-          sdkmanager "ndk;26.1.10909125" "cmake;3.22.1" "platforms;android-28" "build-tools;34.0.0"
+          sdkmanager "platforms;android-28" "build-tools;34.0.0" "ndk;26.1.10909125" "cmake;3.22.1"
 
       - name: Build Debug APK
         run: |
