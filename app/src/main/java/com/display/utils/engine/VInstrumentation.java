@@ -84,7 +84,7 @@ public class VInstrumentation {
         }
     }
 
-    private void ensureHooked() {
+    public void ensureHookedPublic() {
         if (hooked) return;
         try {
             Class<?> atClass = Class.forName("android.app.ActivityThread");

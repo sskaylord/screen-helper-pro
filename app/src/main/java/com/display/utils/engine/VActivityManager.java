@@ -129,17 +129,57 @@ public class VActivityManager {
 
     public void onStubCreate(Activity stub, Bundle saved) {
         int slot = stub.getIntent().getIntExtra("_vs", -1);
+        Log.i(TAG, "onStubCreate slot=" + slot);
         if (slot < 0) { stub.finish(); return; }
         Intent ri = realIntents.get(slot);
         String pkg = targetPkgs.get(slot);
         ActivityInfo ti = targetInfos.get(slot);
-        if (ri == null || pkg == null) { stub.finish(); return; }
+        if (ri == null || pkg == null) { Log.e(TAG, "No data for slot " + slot); stub.finish(); return; }
         SandboxRecord rec = apps.get(pkg);
-        if (rec == null) { stub.finish(); return; }
+        if (rec == null) { Log.e(TAG, "No record for " + pkg); stub.finish(); return; }
+
+        // 1 — IO redirect
         IORedirect.activate(rec.dataDir, rec.libDir, pkg);
-        try { VClassLoader.load(ctx, rec.apkPath, rec.libDir, rec.cacheDir); }
-        catch (Exception e) { Log.e(TAG, "CL fail: " + e); stub.finish(); return; }
+
+        // 2 — ClassLoader (split APK dahil)
+        try {
+            VClassLoader.load(ctx, pkg, rec.apkPath, rec.libDir, rec.cacheDir);
+        } catch (Exception e) { Log.e(TAG, "CL fail: " + e); stub.finish(); return; }
+
+        // 3 — Target Application lifecycle
+        startTargetApplication(rec);
+
+        // 4 — VIW hook (stub intercept için kritik)
+        VInstrumentation.get().ensureHookedPublic();
+
+        // 5 — ACR patch
         VInstrumentation.get().launch(stub, ri, ti, rec, slot);
+
+        // 6 — Overlay inject (Standoff 2)
+        if ("com.axlebolt.standoff2".equals(pkg)) {
+            new android.os.Handler(android.os.Looper.getMainLooper())
+                .postDelayed(() -> {
+                    try { DisplayCore.initialize(stub, pkg); }
+                    catch (Exception e) { Log.e(TAG, "DC init: " + e); }
+                }, 3500);
+        }
+    }
+
+    private void startTargetApplication(SandboxRecord rec) {
+        try {
+            ClassLoader tcl = VClassLoader.getCL();
+            if (tcl == null) return;
+            android.content.pm.PackageInfo pi = ctx.getPackageManager().getPackageInfo(rec.packageName, 0);
+            String appCls = pi.applicationInfo.className;
+            if (appCls == null) appCls = "android.app.Application";
+            Class<?> clz = tcl.loadClass(appCls);
+            android.app.Application app = (android.app.Application) clz.newInstance();
+            java.lang.reflect.Method attach = android.app.Application.class.getDeclaredMethod("attach", android.content.Context.class);
+            attach.setAccessible(true);
+            attach.invoke(app, ctx);
+            app.onCreate();
+            Log.i(TAG, "Target App started: " + appCls);
+        } catch (Exception e) { Log.w(TAG, "App lifecycle skip: " + e); }
     }
 
     public void onStubDestroy(Activity stub) {
@@ -192,6 +232,17 @@ public class VActivityManager {
         Log.i(TAG, "Direct launch stub[" + slot + "] for " + pkg);
         ctx.startActivity(si);
     }
+
+
+    public String getRealClass(int slot) {
+        Intent ri = realIntents.get(slot);
+        if (ri != null && ri.getComponent() != null) return ri.getComponent().getClassName();
+        ActivityInfo ti = targetInfos.get(slot);
+        if (ti != null) return ti.name;
+        return null;
+    }
+
+    public String getRealPkg(int slot) { return targetPkgs.get(slot); }
 
     public boolean isInstalled(String pkg) { SandboxRecord r = apps.get(pkg); return r != null && r.installed; }
     public List<SandboxRecord> getInstalledApps() { return new ArrayList<>(apps.values()); }

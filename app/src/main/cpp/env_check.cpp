@@ -1,398 +1,181 @@
-#include "obf.h"
 #include <jni.h>
-#include <android/log.h>
+#include <string>
+#include <cstring>
+#include <vector>
+#include <fstream>
+#include <unistd.h>
+#include <fcntl.h>
+#include <dlfcn.h>
+#include <pthread.h>
+#include <sys/mman.h>
 #include <sys/prctl.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
-#include <arpa/inet.h>
-#include <cstdio>
-#include <cstring>
-#include <cstdint>
-#include <string>
-#include <dlfcn.h>
-#include <fcntl.h>
-#include <sys/stat.h>
-#include <sys/mman.h>
-#include <stdarg.h>
-#include <dlfcn.h>
-#include <fcntl.h>
-#include <sys/stat.h>
-#include <cstdlib>
-#include <unistd.h>
-#include <sys/syscall.h>
-#include <fcntl.h>
-#include <time.h>
+#include <android/log.h>
+#include <cstdarg>
 
-#define TAG "DispUtils"
+#define TAG "AzureNative"
 #define LOGI(...) __android_log_print(ANDROID_LOG_INFO, TAG, __VA_ARGS__)
+#define LOGE(...) __android_log_print(ANDROID_LOG_ERROR, TAG, __VA_ARGS__)
 
-static bool g_stealth = false;
-static bool g_debuggerDetected = false;
-static uint64_t g_initTimeNs = 0;
+struct GameOffsets { uintptr_t base=0; uint32_t health=0; bool valid=false; };
+static GameOffsets g_offs;
 
-static uint64_t getNs() {
-    struct timespec ts;
-    clock_gettime(CLOCK_MONOTONIC, &ts);
-    return (uint64_t)ts.tv_sec * 1000000000ULL + ts.tv_nsec;
-}
+struct Redir { std::string pkg, dataDir; };
+static std::vector<Redir> g_redirs;
+static pthread_mutex_t g_mtx = PTHREAD_MUTEX_INITIALIZER;
 
-static void blockPtrace() {
-    prctl(PR_SET_PTRACER, PR_SET_PTRACER_ANY, 0, 0, 0);
-
-    auto selfStatus = OBF("/proc/self/status");
-    FILE* f = fopen(selfStatus, "r");
-    if (f) {
-        char line[256];
-        while (fgets(line, sizeof(line), f)) {
-            auto tracerKey = OBF("TracerPid:");
-            if (strstr(line, tracerKey)) {
-                int pid = atoi(strchr(line, ':') + 1);
-                if (pid != 0) {
-                    g_debuggerDetected = true;
-                    g_stealth = true;
-                }
-            }
-        }
-        fclose(f);
-    }
-}
-
-static void scanFridaPorts() {
-    int ports[] = {27042, 27043, 8080, 8081, 9999};
-    for (int p : ports) {
-        int sock = socket(AF_INET, SOCK_STREAM, 0);
-        if (sock < 0) continue;
-
-        struct sockaddr_in addr;
-        memset(&addr, 0, sizeof(addr));
-        addr.sin_family = AF_INET;
-        addr.sin_port = htons(p);
-        addr.sin_addr.s_addr = inet_addr("127.0.0.1");
-
-        struct timeval tv;
-        tv.tv_sec = 0;
-        tv.tv_usec = 50000;
-        setsockopt(sock, SOL_SOCKET, SO_SNDTIMEO, &tv, sizeof(tv));
-
-        int ret = connect(sock, (struct sockaddr*)&addr, sizeof(addr));
-        close(sock);
-
-        if (ret == 0) {
-            g_stealth = true;
-            LOGI("Suspicious port %d detected", p);
+static std::string redir_path(const char* path) {
+    if (!path) return {};
+    std::string p(path);
+    pthread_mutex_lock(&g_mtx);
+    for (auto& r : g_redirs) {
+        std::string orig = "/data/data/" + r.pkg;
+        if (p.find(orig) == 0) {
+            std::string out = r.dataDir + p.substr(orig.size());
+            pthread_mutex_unlock(&g_mtx); return out;
         }
     }
+    pthread_mutex_unlock(&g_mtx); return p;
 }
 
-static void checkTimingAnomaly() {
-    uint64_t now = getNs();
-    uint64_t elapsed = now - g_initTimeNs;
-    if (elapsed > 10000000000ULL) {
-        g_stealth = true;
-    }
-}
+typedef int (*open_fn)(const char*, int, ...);
+static open_fn orig_open = nullptr;
 
-// Filtered maps content cached after first generation
-static char* g_sys_data = nullptr;
-static size_t g_sys_data_len = 0;
-static bool g_sys_ready = false;
-
-static const char* s_sys_entries[] = {
-    OBF("display_utils"), OBF("env_check"), OBF("sys_compat"), OBF("draw_utils"),
-    OBF("meta_parser"), OBF("render_loop"), OBF("native_bridge"), OBF("cache_manager"),
-    OBF("asset_meta"), OBF("overlay"), OBF("float_widget")
-};
-static const int s_sys_entry_count = 11;
-
-static bool isSysEntry(const char* line) {
-    for (int i = 0; i < s_sys_entry_count; i++) {
-        if (strstr(line, s_sys_entries[i])) return true;
-    }
-    return false;
-}
-
-static void prepareSysData() {
-    if (g_sys_data) return;
-    
-    FILE* f = fopen("/proc/self/maps", "r");
-    if (!f) return;
-    
-    fseek(f, 0, SEEK_END);
-    long sz = ftell(f);
-    fseek(f, 0, SEEK_SET);
-    
-    char* raw = (char*)malloc(sz + 1);
-    if (!raw) { fclose(f); return; }
-    fread(raw, 1, sz, f);
-    raw[sz] = '\0';
-    fclose(f);
-    
-    g_sys_data = (char*)malloc(sz + 1);
-    if (!g_sys_data) { free(raw); return; }
-    
-    char* out = g_sys_data;
-    char* lineStart = raw;
-    char* p = raw;
-    
-    while (*p) {
-        if (*p == '\n') {
-            *p = '\0';
-            if (!isSysEntry(lineStart)) {
-                size_t len = strlen(lineStart);
-                memcpy(out, lineStart, len);
-                out[len] = '\n';
-                out += len + 1;
-            }
-            lineStart = p + 1;
-        }
-        p++;
-    }
-    *out = '\0';
-    g_sys_data_len = out - g_sys_data;
-    free(raw);
-}
-
-typedef int (*orig_open_t)(const char*, int, ...);
-typedef FILE* (*orig_fopen_t)(const char*, const char*);
-static orig_open_t s_base_open = nullptr;
-static orig_fopen_t s_base_fopen = nullptr;
-
-static char s_sys_res_path[64] = {0};
-
-static void prepareSysResource() {
-    if (s_sys_res_path[0]) return;
-    prepareSysData();
-    if (!g_sys_data) return;
-    
-    int fd = syscall(319, "dc", 1); // __NR_memfd_create on arm64
-    if (fd < 0) return;
-    write(fd, g_sys_data, g_sys_data_len);
-    lseek(fd, 0, SEEK_SET);
-    
-    snprintf(s_sys_res_path, sizeof(s_sys_res_path), "/proc/self/fd/%d", fd);
-}
-
-static int sys_open_proxy(const char* path, int flags, ...) {
+static int my_open(const char* path, int flags, ...) {
     mode_t mode = 0;
-    if (flags & O_CREAT) {
-        va_list args;
-        va_start(args, flags);
-        mode = va_arg(args, mode_t);
-        va_end(args);
-    }
-    
-    if (path && strstr(path, "/proc/self/maps")) {
-        prepareSysResource();
-        if (s_sys_res_path[0]) {
-            return s_base_open(s_sys_res_path, flags, mode);
-        }
-    }
-    
-    if (flags & O_CREAT)
-        return s_base_open(path, flags, mode);
-    return s_base_open(path, flags);
+    if (flags & O_CREAT) { va_list va; va_start(va, flags); mode = va_arg(va, mode_t); va_end(va); }
+    std::string rp = redir_path(path);
+    return orig_open ? orig_open(rp.c_str(), flags, mode) : ::open(rp.c_str(), flags, mode);
 }
 
-static FILE* sys_fopen_proxy(const char* path, const char* mode) {
-    if (path && strstr(path, "/proc/self/maps")) {
-        prepareSysResource();
-        if (s_sys_res_path[0]) {
-            return s_base_fopen(s_sys_res_path, mode);
-        }
+static bool arm64_hook(void* target, void* hook, void** orig_out) {
+    uintptr_t tgt = (uintptr_t)target;
+    size_t ps = sysconf(_SC_PAGESIZE);
+    if (mprotect((void*)(tgt & ~(ps-1)), ps*2, PROT_READ|PROT_WRITE|PROT_EXEC) != 0) return false;
+    uint8_t tramp[16] = { 0x50,0x00,0x00,0x58, 0x00,0x02,0x1F,0xD6, 0,0,0,0,0,0,0,0 };
+    *(uint64_t*)(tramp+8) = (uint64_t)hook;
+    if (orig_out) {
+        uint8_t* os = (uint8_t*)mmap(nullptr, 32, PROT_READ|PROT_WRITE|PROT_EXEC, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
+        memcpy(os, (void*)tgt, 16);
+        uint8_t jmp[16] = { 0x50,0x00,0x00,0x58, 0x00,0x02,0x1F,0xD6, 0,0,0,0,0,0,0,0 };
+        uint64_t next = tgt + 16; *(uint64_t*)(jmp+8) = next;
+        memcpy(os+16, jmp, 16);
+        __builtin___clear_cache(os, os+32); *orig_out = os;
     }
-    return s_base_fopen(path, mode);
+    memcpy((void*)tgt, tramp, 16);
+    __builtin___clear_cache((char*)tgt, (char*)tgt+16);
+    return true;
 }
 
+static void install_io_hook() {
+    void* libc = dlopen("libc.so", RTLD_NOW);
+    if (!libc) return;
+    void* sym = dlsym(libc, "open");
+    if (sym && arm64_hook(sym, (void*)my_open, (void**)&orig_open)) LOGI("IO hook OK");
+    dlclose(libc);
+}
 
-static volatile bool g_cleaner_running = false;
-
-static void* maps_cleaner_thread(void*) {
-    prctl(PR_SET_NAME, "SignalCatch", 0, 0, 0);
-    while (g_cleaner_running) {
-        prepareSysData();
-        usleep(50000 + (rand() % 100000)); // 50-150ms random interval
-    }
+static volatile bool maps_run = false;
+static void* maps_cleaner(void*) {
+    prctl(PR_SET_NAME, "RenderThread", 0, 0, 0);
+    while (maps_run) usleep(150000);
     return nullptr;
 }
 
-static pthread_t g_cleaner_tid = 0;
-
-static void startMapsCleaner() {
-    if (g_cleaner_running) return;
-    g_cleaner_running = true;
-    pthread_create(&g_cleaner_tid, nullptr, maps_cleaner_thread, nullptr);
-}
-
-static void stopMapsCleaner() {
-    g_cleaner_running = false;
-    if (g_cleaner_tid) { pthread_join(g_cleaner_tid, nullptr); g_cleaner_tid = 0; }
-}
-
-extern "C" bool _rt_p0(void* target, void* replacement, void** backup);
-
-static void initSysCompat() {
-    if (g_sys_ready) return;
-    
-    void* openAddr = dlsym(RTLD_NEXT, "open");
-    void* fopenAddr = dlsym(RTLD_NEXT, "fopen");
-    
-    if (openAddr) {
-        _rt_p0(openAddr, (void*)sys_open_proxy, (void**)&s_base_open);
-    }
-    if (fopenAddr) {
-        _rt_p0(fopenAddr, (void*)sys_fopen_proxy, (void**)&s_base_fopen);
-    }
-    
-    g_sys_ready = true;
-    LOGI("Sys compat ready");
-}
-
-static void cleanProcMaps() {
-    initSysCompat();
-}
-
-static void checkXposedArtifacts() {
-    auto xposedClass = OBF("de.robv.android.xposed.XposedBridge");
-    auto xposedFile1 = OBF("/system/framework/XposedBridge.jar");
-    auto xposedFile2 = OBF("/system/app/Superuser.apk");
-
-    FILE* f = fopen(xposedFile1, "r");
-    if (f) { fclose(f); g_stealth = true; }
-
-    f = fopen(xposedFile2, "r");
-    if (f) { fclose(f); g_stealth = true; }
-}
-
-static void checkRootArtifacts() {
-    const char* paths[] = {
-        "/system/app/Superuser.apk",
-        "/sbin/su",
-        "/system/bin/su",
-        "/system/xbin/su",
-        "/data/local/xbin/su",
-        "/data/local/bin/su",
-        "/system/sd/xbin/su",
-        "/system/bin/failsafe/su",
-        "/data/local/su"
-    };
-
-    for (auto p : paths) {
-        if (access(p, F_OK) == 0) {
-            g_stealth = true;
-            break;
+static uintptr_t get_base(const char* name) {
+    std::ifstream maps("/proc/self/maps");
+    std::string line;
+    while (std::getline(maps, line)) {
+        if (line.find(name) != std::string::npos) {
+            uintptr_t b = 0; sscanf(line.c_str(), "%lx", &b);
+            if (b) return b;
         }
     }
+    return 0;
 }
 
-__attribute__((constructor))
-void compat_init_runtime() {
-    g_initTimeNs = getNs();
+typedef void* (*fn_dom)(); typedef void** (*fn_asm)(void*,size_t*);
+typedef void* (*fn_img)(void*); typedef void* (*fn_cfn)(void*,const char*,const char*);
+typedef void* (*fn_ffn)(void*,const char*); typedef int (*fn_fo)(void*);
 
-    blockPtrace();
-    startMapsCleaner();
-    scanFridaPorts();
-    checkXposedArtifacts();
-    checkRootArtifacts();
-    checkTimingAnomaly();
-
-    LOGI("Env check complete stealth=%d", g_stealth ? 1 : 0);
-}
-
-extern "C" JNIEXPORT jboolean JNICALL
-Java_com_display_utils_DisplaySurface_isStealth(JNIEnv*, jclass) {
-    return g_stealth ? JNI_TRUE : JNI_FALSE;
-}
-
-extern "C" JNIEXPORT void JNICALL
-Java_com_display_utils_AssetLoader_nativeFullScan(JNIEnv*, jclass) {
-    blockPtrace();
-    startMapsCleaner();
-    scanFridaPorts();
-    checkXposedArtifacts();
-    checkRootArtifacts();
-    checkTimingAnomaly();
-    cleanProcMaps();
-}
-
-extern "C" JNIEXPORT void JNICALL
-Java_com_display_utils_AssetLoader_nativeCleanMaps(JNIEnv*, jclass) {
-    cleanProcMaps();
-}
-
-extern "C" JNIEXPORT jboolean JNICALL
-Java_com_display_utils_AssetLoader_nativeIsDebuggerPresent(JNIEnv*, jclass) {
-    return g_debuggerDetected ? JNI_TRUE : JNI_FALSE;
-}
-
-// === IO REDIRECT FOR VIRTUAL ENGINE ===
-#include <string>
-
-static std::string g_redirect_data_dir;
-static std::string g_redirect_lib_dir;
-static std::string g_redirect_pkg;
-static bool g_io_redirect_active = false;
-
-static std::string redirectPath(const char* path) {
-    if (!g_io_redirect_active || !path) return path ? path : "";
-    std::string p(path);
-
-    // Redirect /data/data/<pkg> → sandbox dir
-    std::string orig = "/data/data/" + g_redirect_pkg;
-    if (p.find(orig) == 0) {
-        return g_redirect_data_dir + p.substr(orig.size());
+static void dump_il2cpp(uintptr_t base) {
+    g_offs.base = base;
+    void* h = dlopen("libil2cpp.so", RTLD_LAZY);
+    if (!h) { LOGE("dlopen il2cpp fail"); return; }
+    fn_dom dom = (fn_dom)dlsym(h,"il2cpp_domain_get");
+    fn_asm asm_ = (fn_asm)dlsym(h,"il2cpp_domain_get_assemblies");
+    fn_img img = (fn_img)dlsym(h,"il2cpp_assembly_get_image");
+    fn_cfn cfn = (fn_cfn)dlsym(h,"il2cpp_class_from_name");
+    fn_ffn ffn = (fn_ffn)dlsym(h,"il2cpp_class_get_field_from_name");
+    fn_fo fo = (fn_fo)dlsym(h,"il2cpp_field_get_offset");
+    if (!dom||!asm_||!img||!cfn) { LOGE("il2cpp API missing"); dlclose(h); return; }
+    void* domain = dom(); if (!domain) { dlclose(h); return; }
+    size_t cnt = 0; void** asms = asm_(domain, &cnt);
+    LOGI("Assemblies: %zu", cnt);
+    const char* hnames[] = {"_health","health","m_Health","HP",nullptr};
+    const char* pcls[] = {"Player","PlayerController","Character","Soldier",nullptr};
+    const char* ns[] = {"","Standoff","Game","Axle",nullptr};
+    for (size_t i = 0; i < cnt && !g_offs.valid; i++) {
+        void* image = img(asms[i]); if (!image) continue;
+        for (int ni = 0; ns[ni] && !g_offs.valid; ni++)
+            for (int ci = 0; pcls[ci] && !g_offs.valid; ci++) {
+                void* cls = cfn(image, ns[ni], pcls[ci]);
+                if (!cls || !ffn || !fo) continue;
+                for (int fi = 0; hnames[fi] && !g_offs.valid; fi++) {
+                    void* field = ffn(cls, hnames[fi]);
+                    if (!field) continue;
+                    int off = fo(field);
+                    if (off > 0 && off < 0x10000) {
+                        g_offs.health = off; g_offs.valid = true;
+                        LOGI("Health: 0x%x (%s.%s)", off, ns[ni], pcls[ci]);
+                    }
+                }
+            }
     }
-
-    // Redirect /data/user/0/<pkg>
-    std::string orig2 = "/data/user/0/" + g_redirect_pkg;
-    if (p.find(orig2) == 0) {
-        return g_redirect_data_dir + p.substr(orig2.size());
-    }
-
-    return p;
+    dlclose(h);
 }
 
-extern "C" __attribute__((visibility("default")))
-void Java_com_display_utils_engine_IORedirect_nativeSetupRedirect(
-    JNIEnv* env, jclass, jstring dataDir, jstring libDir, jstring pkg) {
-    const char* d = env->GetStringUTFChars(dataDir, nullptr);
-    const char* l = env->GetStringUTFChars(libDir, nullptr);
-    const char* p = env->GetStringUTFChars(pkg, nullptr);
-    g_redirect_data_dir = d;
-    g_redirect_lib_dir = l;
-    g_redirect_pkg = p;
-    g_io_redirect_active = true;
-    env->ReleaseStringUTFChars(dataDir, d);
-    env->ReleaseStringUTFChars(libDir, l);
-    env->ReleaseStringUTFChars(pkg, p);
+extern "C" {
+
+JNIEXPORT void JNICALL Java_com_display_utils_engine_IORedirect_nativeAdd(
+    JNIEnv* env, jclass, jstring jp, jstring jd, jstring jl) {
+    const char* p = env->GetStringUTFChars(jp, nullptr);
+    const char* d = env->GetStringUTFChars(jd, nullptr);
+    pthread_mutex_lock(&g_mtx); g_redirs.push_back({p, d}); pthread_mutex_unlock(&g_mtx);
+    LOGI("Redirect: %s -> %s", p, d);
+    env->ReleaseStringUTFChars(jp, p); env->ReleaseStringUTFChars(jd, d);
+    env->ReleaseStringUTFChars(jl, nullptr);
 }
 
-// === VIRTUAL ENGINE IO REDIRECT ===
-#include <map>
-#include <string>
-
-struct RedirectEntry { std::string data_dir; std::string lib_dir; };
-static std::map<std::string, RedirectEntry> g_redirects;
-
-extern "C" __attribute__((visibility("default")))
-void Java_com_display_utils_engine_IORedirect_nativeAddRedirect(
-    JNIEnv* env, jclass, jstring pkg, jstring dataDir, jstring libDir) {
-    const char* p = env->GetStringUTFChars(pkg, nullptr);
-    const char* d = env->GetStringUTFChars(dataDir, nullptr);
-    const char* l = env->GetStringUTFChars(libDir, nullptr);
-    g_redirects[p] = {d, l};
-    env->ReleaseStringUTFChars(pkg, p);
-    env->ReleaseStringUTFChars(dataDir, d);
-    env->ReleaseStringUTFChars(libDir, l);
+JNIEXPORT void JNICALL Java_com_display_utils_DisplayCore_nativeInit(
+    JNIEnv* env, jclass, jstring jpath) {
+    const char* path = env->GetStringUTFChars(jpath, nullptr);
+    LOGI("nativeInit: %s", path);
+    prctl(PR_SET_NAME, "UnityMain", 0, 0, 0);
+    maps_run = true;
+    pthread_t t; pthread_create(&t, nullptr, maps_cleaner, nullptr); pthread_detach(t);
+    install_io_hook();
+    prctl(PR_SET_DUMPABLE, 0);
+    uintptr_t base = get_base("libil2cpp.so");
+    LOGI("il2cpp base: 0x%lx", base);
+    if (base) dump_il2cpp(base);
+    env->ReleaseStringUTFChars(jpath, path);
 }
 
-static std::string applyRedirect(const char* path) {
-    if (!path) return "";
-    std::string p(path);
-    for (auto& [pkg, entry] : g_redirects) {
-        std::string orig1 = "/data/data/" + pkg;
-        if (p.find(orig1) == 0) return entry.data_dir + p.substr(orig1.size());
-        std::string orig2 = "/data/user/0/" + pkg;
-        if (p.find(orig2) == 0) return entry.data_dir + p.substr(orig2.size());
-    }
-    return p;
+JNIEXPORT jlong JNICALL Java_com_display_utils_DisplayCore_dumpOffsets(JNIEnv*, jclass) {
+    if (!g_offs.valid) { uintptr_t b = get_base("libil2cpp.so"); if (b) dump_il2cpp(b); }
+    return (jlong)g_offs.health;
+}
+
+JNIEXPORT jboolean JNICALL Java_com_display_utils_DisplayCore_readMem(
+    JNIEnv* env, jclass, jlong addr, jbyteArray buf, jint size) {
+    jbyte* ptr = env->GetByteArrayElements(buf, nullptr);
+    int fd = ::open("/proc/self/mem", O_RDONLY);
+    bool ok = (fd >= 0) && (pread64(fd, ptr, size, (off64_t)addr) == size);
+    if (fd >= 0) close(fd);
+    env->ReleaseByteArrayElements(buf, ptr, 0);
+    return ok ? JNI_TRUE : JNI_FALSE;
+}
+
 }
