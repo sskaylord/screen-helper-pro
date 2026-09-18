@@ -18,10 +18,14 @@ jobs:
           distribution: 'temurin'
 
       - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
+        uses: android-actions/setup-android@v2
+        with:
+          cmdline-tools-version: 'latest'
 
       - name: Install NDK + CMake
-        run: sdkmanager "ndk;26.1.10909125" "cmake;3.22.1"
+        run: |
+          yes | sdkmanager --licenses > /dev/null 2>&1 || true
+          sdkmanager "ndk;26.1.10909125" "cmake;3.22.1" "platforms;android-28" "build-tools;34.0.0"
 
       - name: Build Debug APK
         run: |
@@ -29,7 +33,7 @@ jobs:
             gradle wrapper --gradle-version 8.2
             chmod +x gradlew
           fi
-          ./gradlew assembleDebug
+          ./gradlew assembleDebug --no-daemon
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
