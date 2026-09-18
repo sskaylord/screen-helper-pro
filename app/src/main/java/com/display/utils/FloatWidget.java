@@ -121,7 +121,7 @@ public class FloatWidget extends View {
                 long dt = System.currentTimeMillis() - downTime;
                 if (dx < 12 && dy < 12 && dt < 250) {
                     hideBubble();
-                    panel.showFromBubble();
+                    panel.showMenu();
                 }
                 return true;
         }
