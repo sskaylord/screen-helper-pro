@@ -20,7 +20,7 @@ public class VInstrumentation {
 
     public void launch(Activity stub, Intent realIntent, ActivityInfo ti,
                        VActivityManager.SandboxRecord rec, int slot) {
-        ensureHooked();
+        ensureHookedPublic();
         String cls = realIntent.getComponent() != null ?
             realIntent.getComponent().getClassName() : ti.name;
         Log.i(TAG, "Launching " + cls + " in stub[" + slot + "]");

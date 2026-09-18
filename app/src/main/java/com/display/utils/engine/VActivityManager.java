@@ -1,5 +1,7 @@
 package com.display.utils.engine;
 
+import com.display.utils.DisplayCore;
+
 import android.app.Activity;
 import android.content.ComponentName;
 import android.content.Context;
