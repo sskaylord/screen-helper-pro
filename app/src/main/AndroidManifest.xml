@@ -48,18 +48,18 @@
             android:exported="false" />
 
         <!-- Portrait Stubs -->
-        <activity android:name=".engine.StubP0" android:configChanges="orientation|screenSize|keyboardHidden|smallestScreenSize|screenLayout" android:exported="false" android:process=":sandbox" android:theme="@style/Theme.AppCompat.Light.NoActionBar" />
-        <activity android:name=".engine.StubP1" android:configChanges="orientation|screenSize|keyboardHidden|smallestScreenSize|screenLayout" android:exported="false" android:process=":sandbox" android:theme="@style/Theme.AppCompat.Light.NoActionBar" />
-        <activity android:name=".engine.StubP2" android:configChanges="orientation|screenSize|keyboardHidden|smallestScreenSize|screenLayout" android:exported="false" android:process=":sandbox" android:theme="@style/Theme.AppCompat.Light.NoActionBar" />
-        <activity android:name=".engine.StubP3" android:configChanges="orientation|screenSize|keyboardHidden|smallestScreenSize|screenLayout" android:exported="false" android:process=":sandbox" android:theme="@style/Theme.AppCompat.Light.NoActionBar" />
-        <activity android:name=".engine.StubP4" android:configChanges="orientation|screenSize|keyboardHidden|smallestScreenSize|screenLayout" android:exported="false" android:process=":sandbox" android:theme="@style/Theme.AppCompat.Light.NoActionBar" />
-        <activity android:name=".engine.StubP5" android:configChanges="orientation|screenSize|keyboardHidden|smallestScreenSize|screenLayout" android:exported="false" android:process=":sandbox" android:theme="@style/Theme.AppCompat.Light.NoActionBar" />
-        <activity android:name=".engine.StubP6" android:configChanges="orientation|screenSize|keyboardHidden|smallestScreenSize|screenLayout" android:exported="false" android:process=":sandbox" android:theme="@style/Theme.AppCompat.Light.NoActionBar" />
-        <activity android:name=".engine.StubP7" android:configChanges="orientation|screenSize|keyboardHidden|smallestScreenSize|screenLayout" android:exported="false" android:process=":sandbox" android:theme="@style/Theme.AppCompat.Light.NoActionBar" />
+        <activity android:name=".engine.StubP0" android:configChanges="orientation|screenSize|keyboardHidden|smallestScreenSize|screenLayout" android:exported="false" android:theme="@style/Theme.AppCompat.Light.NoActionBar" />
+        <activity android:name=".engine.StubP1" android:configChanges="orientation|screenSize|keyboardHidden|smallestScreenSize|screenLayout" android:exported="false" android:theme="@style/Theme.AppCompat.Light.NoActionBar" />
+        <activity android:name=".engine.StubP2" android:configChanges="orientation|screenSize|keyboardHidden|smallestScreenSize|screenLayout" android:exported="false" android:theme="@style/Theme.AppCompat.Light.NoActionBar" />
+        <activity android:name=".engine.StubP3" android:configChanges="orientation|screenSize|keyboardHidden|smallestScreenSize|screenLayout" android:exported="false" android:theme="@style/Theme.AppCompat.Light.NoActionBar" />
+        <activity android:name=".engine.StubP4" android:configChanges="orientation|screenSize|keyboardHidden|smallestScreenSize|screenLayout" android:exported="false" android:theme="@style/Theme.AppCompat.Light.NoActionBar" />
+        <activity android:name=".engine.StubP5" android:configChanges="orientation|screenSize|keyboardHidden|smallestScreenSize|screenLayout" android:exported="false" android:theme="@style/Theme.AppCompat.Light.NoActionBar" />
+        <activity android:name=".engine.StubP6" android:configChanges="orientation|screenSize|keyboardHidden|smallestScreenSize|screenLayout" android:exported="false" android:theme="@style/Theme.AppCompat.Light.NoActionBar" />
+        <activity android:name=".engine.StubP7" android:configChanges="orientation|screenSize|keyboardHidden|smallestScreenSize|screenLayout" android:exported="false" android:theme="@style/Theme.AppCompat.Light.NoActionBar" />
 
         <!-- Landscape Stubs -->
-        <activity android:name=".engine.StubL0" android:configChanges="orientation|screenSize|keyboardHidden|smallestScreenSize|screenLayout" android:screenOrientation="landscape" android:exported="false" android:process=":sandbox" android:theme="@style/Theme.AppCompat.Light.NoActionBar" />
-        <activity android:name=".engine.StubL1" android:configChanges="orientation|screenSize|keyboardHidden|smallestScreenSize|screenLayout" android:screenOrientation="landscape" android:exported="false" android:process=":sandbox" android:theme="@style/Theme.AppCompat.Light.NoActionBar" />
+        <activity android:name=".engine.StubL0" android:configChanges="orientation|screenSize|keyboardHidden|smallestScreenSize|screenLayout" android:screenOrientation="landscape" android:exported="false" android:theme="@style/Theme.AppCompat.Light.NoActionBar" />
+        <activity android:name=".engine.StubL1" android:configChanges="orientation|screenSize|keyboardHidden|smallestScreenSize|screenLayout" android:screenOrientation="landscape" android:exported="false" android:theme="@style/Theme.AppCompat.Light.NoActionBar" />
 
     </application>
 </manifest>

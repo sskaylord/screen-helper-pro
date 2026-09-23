@@ -111,23 +111,21 @@ public class ProfileManager extends Activity {
     void onAction(String name,String pkg){
         log("onAction: "+name+" / "+pkg);
         Toast.makeText(this,name+" klonlan\u0131yor...",Toast.LENGTH_SHORT).show();
-        new Thread(()->{try{
-            log("step1: VCore.init");
-            VCore.get().init(getApplicationContext());
-            log("step2: installApp");
-            boolean ok=VCore.get().installApp(pkg);
-            log("step3: installed="+ok);
-            if(!ok){runOnUiThread(()->Toast.makeText(this,"Kurulum ba\u015far\u0131s\u0131z",Toast.LENGTH_LONG).show());return;}
-            log("step4: launchApp");
-            runOnUiThread(()->{
-                try{
-                    try {
-                        VCore.get().launchApp(pkg);
-                        log("step5: launched OK");
-                    } catch (Exception ex) {
-                        log("step5 CRASH: " + ex.getClass().getName() + ": " + ex.getMessage());
-                        ex.printStackTrace();
-                    }
+        // Hepsi main thread'de — background launch restriction bypass
+        log("step1: VCore.init");
+        VCore.get().init(getApplicationContext());
+        log("step2: installApp");
+        boolean ok=VCore.get().installApp(pkg);
+        log("step3: installed="+ok);
+        if(!ok){Toast.makeText(this,"Kurulum ba\u015far\u0131s\u0131z",Toast.LENGTH_LONG).show();return;}
+        log("step4: launchApp");
+        try{
+            try {
+                VCore.get().launchApp(pkg);
+                log("step5: launched OK");
+            } catch (Exception ex) {
+                log("step5 CRASH: " + ex.getClass().getName() + ": " + ex.getMessage());
+            }
                     if(pkg.equals("com.axlebolt.standoff2")){
                         new Handler(Looper.getMainLooper()).postDelayed(()->{
                             try{OverlayPanel p=DisplayCore.getPanel();if(p!=null){p.show();log("step6: overlay shown");}}
@@ -136,6 +134,6 @@ public class ProfileManager extends Activity {
                     }
                 }catch(Exception e){log("launch err: "+e);Toast.makeText(this,"Hata: "+e.getMessage(),Toast.LENGTH_LONG).show();}
             });
-        }catch(Exception e){log("FATAL: "+e);runOnUiThread(()->Toast.makeText(this,"Hata: "+e.getMessage(),Toast.LENGTH_LONG).show());}}).start();
+        }catch(Exception e){log("FATAL: "+e);Toast.makeText(this,"Hata: "+e.getMessage(),Toast.LENGTH_LONG).show();}
     }
 }

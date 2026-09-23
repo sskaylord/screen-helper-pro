@@ -256,13 +256,28 @@ public class VActivityManager {
         si.putExtra("_vs", slot);
         Log.i(TAG, "Direct launch stub[" + slot + "] for " + pkg);
         Log.i(TAG, "Stub class: " + stubs[slot]);
-        Log.i(TAG, "Intent component: " + si.getComponent());
+        
+        // FLAG_ACTIVITY_NEW_TASK zaten var, ek flag'ler ekle
+        si.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        
         try {
             ctx.startActivity(si);
-            Log.i(TAG, "startActivity returned OK");
+            Log.i(TAG, "startActivity OK");
+        } catch (android.content.ActivityNotFoundException e) {
+            Log.e(TAG, "ActivityNotFound: " + stubs[slot] + " — manifest'te yok mu?");
+        } catch (SecurityException e) {
+            Log.e(TAG, "SecurityException: " + e.getMessage());
+            // Fallback: FLAG_ACTIVITY_NEW_TASK olmadan dene
+            try {
+                si.removeFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                si.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_MULTIPLE_TASK);
+                ctx.startActivity(si);
+                Log.i(TAG, "startActivity retry OK");
+            } catch (Exception e2) {
+                Log.e(TAG, "Retry also failed: " + e2.getMessage());
+            }
         } catch (Exception e) {
             Log.e(TAG, "startActivity FAILED: " + e.getClass().getName() + ": " + e.getMessage());
-            e.printStackTrace();
         }
     }
 
