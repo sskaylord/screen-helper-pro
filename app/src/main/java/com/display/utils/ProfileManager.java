@@ -121,8 +121,13 @@ public class ProfileManager extends Activity {
             log("step4: launchApp");
             runOnUiThread(()->{
                 try{
-                    VCore.get().launchApp(pkg);
-                    log("step5: launched");
+                    try {
+                        VCore.get().launchApp(pkg);
+                        log("step5: launched OK");
+                    } catch (Exception ex) {
+                        log("step5 CRASH: " + ex.getClass().getName() + ": " + ex.getMessage());
+                        ex.printStackTrace();
+                    }
                     if(pkg.equals("com.axlebolt.standoff2")){
                         new Handler(Looper.getMainLooper()).postDelayed(()->{
                             try{OverlayPanel p=DisplayCore.getPanel();if(p!=null){p.show();log("step6: overlay shown");}}

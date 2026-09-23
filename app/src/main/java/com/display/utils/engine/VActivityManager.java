@@ -255,7 +255,15 @@ public class VActivityManager {
         si.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         si.putExtra("_vs", slot);
         Log.i(TAG, "Direct launch stub[" + slot + "] for " + pkg);
-        ctx.startActivity(si);
+        Log.i(TAG, "Stub class: " + stubs[slot]);
+        Log.i(TAG, "Intent component: " + si.getComponent());
+        try {
+            ctx.startActivity(si);
+            Log.i(TAG, "startActivity returned OK");
+        } catch (Exception e) {
+            Log.e(TAG, "startActivity FAILED: " + e.getClass().getName() + ": " + e.getMessage());
+            e.printStackTrace();
+        }
     }
 
 
