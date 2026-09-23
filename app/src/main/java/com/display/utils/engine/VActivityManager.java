@@ -56,30 +56,53 @@ public class VActivityManager {
 
     private void hookAMS() {
         try {
-            Object singleton;
+            Object singleton = null;
+            // Android 10+: ActivityTaskManager
             try {
-                Class<?> am = Class.forName("android.app.ActivityManager");
-                Field f = am.getDeclaredField("IActivityManagerSingleton");
+                Class<?> atm = Class.forName("android.app.ActivityTaskManager");
+                Field f = atm.getDeclaredField("IActivityTaskManagerSingleton");
                 f.setAccessible(true);
                 singleton = f.get(null);
+                Log.i(TAG, "Using ActivityTaskManager singleton");
             } catch (Exception e) {
-                Class<?> amn = Class.forName("android.app.ActivityManagerNative");
-                Field f = amn.getDeclaredField("gDefault");
-                f.setAccessible(true);
-                singleton = f.get(null);
+                // Fallback: ActivityManager
+                try {
+                    Class<?> am = Class.forName("android.app.ActivityManager");
+                    Field f = am.getDeclaredField("IActivityManagerSingleton");
+                    f.setAccessible(true);
+                    singleton = f.get(null);
+                    Log.i(TAG, "Using ActivityManager singleton");
+                } catch (Exception e2) {
+                    Class<?> amn = Class.forName("android.app.ActivityManagerNative");
+                    Field f = amn.getDeclaredField("gDefault");
+                    f.setAccessible(true);
+                    singleton = f.get(null);
+                    Log.i(TAG, "Using ActivityManagerNative gDefault");
+                }
             }
+            if (singleton == null) { Log.e(TAG, "Singleton null"); return; }
+
             Class<?> sc = Class.forName("android.util.Singleton");
             Field inst = sc.getDeclaredField("mInstance");
             inst.setAccessible(true);
-            Method get = sc.getDeclaredMethod("get");
-            get.setAccessible(true);
-            Object raw = get.invoke(singleton);
-            Class<?> iams = Class.forName("android.app.IActivityManager");
-            Object proxy = Proxy.newProxyInstance(Thread.currentThread().getContextClassLoader(),
-                new Class[]{iams}, new AMSH(raw));
+            Object raw = inst.get(singleton);
+            if (raw == null) {
+                Method get = sc.getDeclaredMethod("get");
+                get.setAccessible(true);
+                raw = get.invoke(singleton);
+            }
+
+            // IActivityTaskManager veya IActivityManager
+            Class<?> iface;
+            try { iface = Class.forName("android.app.IActivityTaskManager"); }
+            catch (ClassNotFoundException ex) { iface = Class.forName("android.app.IActivityManager"); }
+
+            Object proxy = Proxy.newProxyInstance(
+                Thread.currentThread().getContextClassLoader(),
+                new Class[]{iface}, new AMSH(raw));
             inst.set(singleton, proxy);
-            Log.i(TAG, "AMS hooked");
-        } catch (Exception e) { Log.e(TAG, "AMS hook fail: " + e); }
+            Log.i(TAG, "AMS hooked with " + iface.getSimpleName());
+        } catch (Exception e) { Log.e(TAG, "AMS hook fail: " + e); e.printStackTrace(); }
     }
 
     private class AMSH implements InvocationHandler {

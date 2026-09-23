@@ -9,7 +9,7 @@ android {
     defaultConfig {
         applicationId "com.display.utils"
         minSdk 26
-        targetSdk 34
+        targetSdk 28
         versionCode 1
         versionName "1.0"
 
@@ -57,7 +57,10 @@ android {
 
     packagingOptions {
         exclude 'META-INF/**'
+        jniLibs { useLegacyPackaging = true }
     }
+
+    android.buildFeatures.buildConfig true
 }
 
 // Force unified Kotlin stdlib version to resolve duplicate class conflicts
