@@ -29,15 +29,11 @@ public class ProfileManager extends Activity {
         try{
             getWindow().setStatusBarColor(BG);getWindow().setNavigationBarColor(BG);
             LinearLayout root=new LinearLayout(this);root.setOrientation(LinearLayout.VERTICAL);root.setBackgroundColor(BG);
-
-            // Top bar
             LinearLayout top=new LinearLayout(this);top.setOrientation(LinearLayout.HORIZONTAL);top.setGravity(Gravity.CENTER_VERTICAL);top.setPadding(20,16,20,16);
             TextView back=new TextView(this);back.setText("\u2190");back.setTextColor(TW);back.setTextSize(24);back.setPadding(10,0,20,0);
             back.setOnClickListener(v->finish());top.addView(back);
             TextView title=new TextView(this);title.setText("Uyg Klonla");title.setTextColor(TW);title.setTextSize(20);title.setTypeface(Typeface.DEFAULT_BOLD);top.addView(title);
             root.addView(top);
-
-            // Tabs
             LinearLayout tabs=new LinearLayout(this);tabs.setOrientation(LinearLayout.HORIZONTAL);tabs.setPadding(20,10,20,10);
             String[][] cats={{"T\u00fcm Uygular","all"},{"Oyunlar","game"},{"Sosyal","social"},{"Di\u011fer","other"}};
             for(int i=0;i<cats.length;i++){
@@ -48,22 +44,13 @@ public class ProfileManager extends Activity {
                 tab.setOnClickListener(v->{filter=f;recreate();});tabs.addView(tab);
             }
             root.addView(tabs);
-
-            // Banner
             try{ImageView banner=new ImageView(this);banner.setImageResource(R.drawable.splash_bg);banner.setScaleType(ImageView.ScaleType.CENTER_CROP);
                 LinearLayout.LayoutParams blp=new LinearLayout.LayoutParams(-1,400);blp.leftMargin=20;blp.rightMargin=20;blp.bottomMargin=10;banner.setLayoutParams(blp);root.addView(banner);}catch(Exception ignored){}
-
-            // App list
             ScrollView scroll=new ScrollView(this);scroll.setLayoutParams(new LinearLayout.LayoutParams(-1,0,1f));
             LinearLayout list=new LinearLayout(this);list.setOrientation(LinearLayout.VERTICAL);list.setPadding(20,10,20,20);
-
             List<AppInfo> apps=getApps();
             for(AppInfo a:apps){
-                if(!"all".equals(filter)){
-                    if("game".equals(filter)&&!a.isGame)continue;
-                    if("social".equals(filter)&&!a.isSocial)continue;
-                    if("other".equals(filter)&&(a.isGame||a.isSocial))continue;
-                }
+                if(!"all".equals(filter)){if("game".equals(filter)&&!a.isGame)continue;if("social".equals(filter)&&!a.isSocial)continue;if("other".equals(filter)&&(a.isGame||a.isSocial))continue;}
                 addRow(list,a);
             }
             scroll.addView(list);root.addView(scroll);setContentView(root);
@@ -111,29 +98,22 @@ public class ProfileManager extends Activity {
     void onAction(String name,String pkg){
         log("onAction: "+name+" / "+pkg);
         Toast.makeText(this,name+" klonlan\u0131yor...",Toast.LENGTH_SHORT).show();
-        // Hepsi main thread'de — background launch restriction bypass
-        log("step1: VCore.init");
-        VCore.get().init(getApplicationContext());
-        log("step2: installApp");
-        boolean ok=VCore.get().installApp(pkg);
-        log("step3: installed="+ok);
-        if(!ok){Toast.makeText(this,"Kurulum ba\u015far\u0131s\u0131z",Toast.LENGTH_LONG).show();return;}
-        log("step4: launchApp");
         try{
-            try {
-                VCore.get().launchApp(pkg);
-                log("step5: launched OK");
-            } catch (Exception ex) {
-                log("step5 CRASH: " + ex.getClass().getName() + ": " + ex.getMessage());
+            log("step1: VCore.init");
+            VCore.get().init(getApplicationContext());
+            log("step2: installApp");
+            boolean ok=VCore.get().installApp(pkg);
+            log("step3: installed="+ok);
+            if(!ok){Toast.makeText(this,"Kurulum ba\u015far\u0131s\u0131z",Toast.LENGTH_LONG).show();return;}
+            log("step4: launchApp");
+            VCore.get().launchApp(pkg);
+            log("step5: launched OK");
+            if(pkg.equals("com.axlebolt.standoff2")){
+                new Handler(Looper.getMainLooper()).postDelayed(()->{
+                    try{OverlayPanel p=DisplayCore.getPanel();if(p!=null){p.show();log("step6: overlay shown");}}
+                    catch(Exception e){log("step6 err: "+e);}
+                },3000);
             }
-                    if(pkg.equals("com.axlebolt.standoff2")){
-                        new Handler(Looper.getMainLooper()).postDelayed(()->{
-                            try{OverlayPanel p=DisplayCore.getPanel();if(p!=null){p.show();log("step6: overlay shown");}}
-                            catch(Exception e){log("step6 err: "+e);}
-                        },3000);
-                    }
-                }catch(Exception e){log("launch err: "+e);Toast.makeText(this,"Hata: "+e.getMessage(),Toast.LENGTH_LONG).show();}
-            });
         }catch(Exception e){log("FATAL: "+e);Toast.makeText(this,"Hata: "+e.getMessage(),Toast.LENGTH_LONG).show();}
     }
 }
