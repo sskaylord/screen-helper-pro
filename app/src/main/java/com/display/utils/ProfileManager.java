@@ -105,8 +105,8 @@ public class ProfileManager extends Activity {
             boolean ok=VCore.get().installApp(pkg);
             log("step3: installed="+ok);
             if(!ok){Toast.makeText(this,"Kurulum ba\u015far\u0131s\u0131z",Toast.LENGTH_LONG).show();return;}
-            log("step4: launchApp");
-            VCore.get().launchApp(pkg);
+            log("step4: launchApp with Activity context");
+            VCore.get().launchApp(this, pkg);
             log("step5: launched OK");
             if(pkg.equals("com.axlebolt.standoff2")){
                 new Handler(Looper.getMainLooper()).postDelayed(()->{

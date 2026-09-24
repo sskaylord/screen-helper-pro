@@ -230,56 +230,55 @@ public class VActivityManager {
         } catch (Exception e) { Log.e(TAG, "Install fail: " + e); return false; }
     }
 
-    public void launchApp(String pkg) {
+    public void launchApp(android.app.Activity from, String pkg) {
         SandboxRecord rec = apps.get(pkg);
         if (rec == null) { installApp(pkg); rec = apps.get(pkg); }
-        if (rec == null) return;
+        if (rec == null) { Log.e(TAG, "No record for " + pkg); return; }
         Intent ri = ctx.getPackageManager().getLaunchIntentForPackage(pkg);
-        if (ri == null) return;
+        if (ri == null) { Log.e(TAG, "No launch intent for " + pkg); return; }
         ComponentName comp = ri.getComponent();
         if (comp == null) {
             var resolve = ctx.getPackageManager().resolveActivity(ri, 0);
             if (resolve != null && resolve.activityInfo != null)
                 comp = new ComponentName(resolve.activityInfo.packageName, resolve.activityInfo.name);
         }
-        if (comp == null) return;
+        if (comp == null) { Log.e(TAG, "Cannot resolve activity for " + pkg); return; }
         ActivityInfo ti = null;
         try { ti = ctx.getPackageManager().getActivityInfo(comp, 0); } catch (Exception ignored) {}
         int slot = allocSlot(ti);
-        if (slot < 0) return;
+        if (slot < 0) { Log.e(TAG, "No free slot"); return; }
         realIntents.put(slot, new Intent(ri));
         targetPkgs.put(slot, pkg);
         if (ti != null) targetInfos.put(slot, ti);
         Intent si = new Intent();
         si.setComponent(new ComponentName(HOST, stubs[slot]));
-        si.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        si.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
         si.putExtra("_vs", slot);
-        Log.i(TAG, "Direct launch stub[" + slot + "] for " + pkg);
-        Log.i(TAG, "Stub class: " + stubs[slot]);
-        
-        // FLAG_ACTIVITY_NEW_TASK zaten var, ek flag'ler ekle
-        si.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-        
-        try {
-            ctx.startActivity(si);
-            Log.i(TAG, "startActivity OK");
-        } catch (android.content.ActivityNotFoundException e) {
-            Log.e(TAG, "ActivityNotFound: " + stubs[slot] + " — manifest'te yok mu?");
-        } catch (SecurityException e) {
-            Log.e(TAG, "SecurityException: " + e.getMessage());
-            // Fallback: FLAG_ACTIVITY_NEW_TASK olmadan dene
+        si.putExtra("_real_class", comp.getClassName());
+        si.putExtra("_real_pkg", pkg);
+        Log.i(TAG, "launchApp stub[" + slot + "] for " + pkg + " from=" + (from != null ? from.getClass().getSimpleName() : "null"));
+
+        if (from != null) {
+            // Activity context — background restriction YOK
             try {
-                si.removeFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                si.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_MULTIPLE_TASK);
-                ctx.startActivity(si);
-                Log.i(TAG, "startActivity retry OK");
-            } catch (Exception e2) {
-                Log.e(TAG, "Retry also failed: " + e2.getMessage());
+                from.startActivity(si);
+                Log.i(TAG, "startActivity from Activity OK");
+            } catch (Exception e) {
+                Log.e(TAG, "startActivity from Activity FAIL: " + e);
             }
-        } catch (Exception e) {
-            Log.e(TAG, "startActivity FAILED: " + e.getClass().getName() + ": " + e.getMessage());
+        } else {
+            // Fallback: ApplicationContext (Android 10+ engelleyebilir)
+            try {
+                ctx.startActivity(si);
+                Log.i(TAG, "startActivity from AppContext OK");
+            } catch (Exception e) {
+                Log.e(TAG, "startActivity from AppContext FAIL: " + e);
+            }
         }
     }
+
+    // Eski signature backward compat
+    public void launchApp(String pkg) { launchApp(null, pkg); }
 
 
     public String getRealClass(int slot) {
